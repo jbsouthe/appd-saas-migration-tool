@@ -15,7 +15,7 @@
                 <include>LICENSE</include>
                 <include>NOTICE.txt</include>
                 <include>log4j2.xml</include>
-                <include>default-config.xml</include>
+                <include>example-config.xml</include>
             </includes>
             <lineEnding>unix</lineEnding>
             <fileMode>0644</fileMode>
