@@ -68,31 +68,41 @@ public class CSVMetricWriter {
                 }
                 switch (metricValue.getBlitzEntityTypeString()) { //this is found in the com.appdynamics.blitz.shared.hbase.dto.MetricValueLineFromCSV class
                     /*
-                    case APPLICATION:
-                        this.timeStamp = Long.toString(Long.parseLong(csvLine.get(0)) * MIN_TO_MILLIS_FACTOR);
-                        this.metricId = csvLine.get(1);
-                        this.applicationId = csvLine.get(2);
-                        this.accountId = csvLine.get(3);
-                        this.groupCount = csvLine.get(4);
-                        this.count = csvLine.get(5);
-                        this.sum = csvLine.get(6);
-                        this.min = csvLine.get(7);
-                        this.max = csvLine.get(8);
-                        this.current = csvLine.get(9);
-                        if (includeWeightedValues) {
-                            this.weightValueSquare = csvLine.get(10);
-                            this.weightValue = csvLine.get(11);
+                    try (Statement st = conn.createStatement()) {
+                        String query =
+                        "SELECT m.ts_min * 60000, m.metric_id, m.rollup_type, m.cluster_rollup_type, m.count_val, m"
+                        + ".sum_val,"
+                        +
+                        " m.min_val, m.max_val, m.cur_val, m.weight_value_square, m.weight_value, a.account_id, ";
+
+                        switch (tableName) {
+                            case DataMigrationConstants.MYSQL_NODE_TABLE_NAME:
+                                query += " 1, m.application_id, m.application_component_instance_id, m.node_id";
+                                break;
+                            case DataMigrationConstants.MYSQL_TIER_TABLE_NAME:
+                                query += "m.group_count_val, m.application_id, m.application_component_instance_id";
+                                break;
+                            case DataMigrationConstants.MYSQL_APP_TABLE_NAME:
+                                query += "m.group_count_val, m.application_id";
+                                break;
+                            default:
+                              throw new IllegalArgumentException("invalid table " + tableName);
                         }
-                        this.timeRollupType = csvLine.get(12);
-                        this.clusterRollupType = csvLine.get(13);
-                        break;
+
+                        query += " INTO OUTFILE " + outputFile +
+                        " FIELDS TERMINATED BY ',' OPTIONALLY ENCLOSED BY '\"'" + " LINES TERMINATED BY '\\n'" +
+                        "FROM " + tableName + " m, application a where m.application_id = a.id and ts_min >= " +
+                        endTimeStamp / TimeUnit.MINUTES.toMillis(1) +
+                        " and ts_min < " + startTimeStamp / TimeUnit.MINUTES.toMillis(1);
+                        log.info("Executing the SQL query: " + query);
+                        st.execute(query);
+                    }
                      */
                         case "app": {
-                            writeCSVValue(aPrinter, metricValue.ts_min);
+                            writeCSVValue(aPrinter, metricValue.ts_min*60000);
                             writeCSVValue(aPrinter, targetMetricId);
-                            writeCSVValue(aPrinter, targetApplicationId);
-                            writeCSVValue(aPrinter, targetAccountId);
-                            writeCSVValue(aPrinter, metricValue.group_count_val);
+                            writeCSVValue(aPrinter, metricValue.rollup_type);
+                            writeCSVValue(aPrinter, metricValue.cluster_rollup_type);
                             writeCSVValue(aPrinter, metricValue.count_val);
                             writeCSVValue(aPrinter, metricValue.sum_val);
                             writeCSVValue(aPrinter, metricValue.min_val);
@@ -100,8 +110,10 @@ public class CSVMetricWriter {
                             writeCSVValue(aPrinter, metricValue.cur_val);
                             writeCSVValue(aPrinter, metricValue.weight_value_square);
                             writeCSVValue(aPrinter, metricValue.weight_value);
-                            writeCSVValue(aPrinter, metricDefinition.timeRollupType);
-                            writeCSVValue(aPrinter, metricDefinition.clusterRollupType, true);
+                            writeCSVValue(aPrinter, targetAccountId);
+                            writeCSVValue(aPrinter, metricValue.group_count_val);
+                            writeCSVValue(aPrinter, targetApplicationId, true);
+
                             break;
                         }
                     /*

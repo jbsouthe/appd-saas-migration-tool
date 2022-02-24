@@ -7,7 +7,7 @@ import java.sql.SQLException;
 
 public class DatabaseMetricValue {
     //Level 1: metricdata_hour_agg_app
-    public Long ts_min, metric_id, application_id, group_count_val, count_val, sum_val, min_val, max_val, cur_val, weight_value_square, weight_value;
+    public Long ts_min, metric_id, application_id, group_count_val, count_val, sum_val, min_val, max_val, cur_val, weight_value_square, weight_value, rollup_type, cluster_rollup_type;
     //Level 2: metricdata_hour_agg
     public Long application_component_instance_id;
     //Level 3: metricdata_hour
@@ -25,6 +25,8 @@ public class DatabaseMetricValue {
         cur_val = resultSet.getLong("cur_val");
         weight_value_square = resultSet.getLong("weight_value_square");
         weight_value = resultSet.getLong("weight_value");
+        rollup_type = resultSet.getLong("rollup_type");
+        cluster_rollup_type = resultSet.getLong("cluster_rollup_type");
         this.type=type;
         switch(type) {
             case "node":
