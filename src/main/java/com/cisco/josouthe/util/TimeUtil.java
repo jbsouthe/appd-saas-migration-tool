@@ -6,10 +6,14 @@ import org.apache.logging.log4j.Logger;
 
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
+import java.time.Month;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
+import java.time.format.TextStyle;
+import java.util.Calendar;
 import java.util.Date;
+import java.util.Locale;
 import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -44,6 +48,15 @@ public class TimeUtil {
     }
 
     public static long getDaysBackTimestamp(int daysToRetrieveData) {
-        return now() - ( daysToRetrieveData *24*60*60*1000);
+        Calendar calendar = Calendar.getInstance();
+        calendar.setTime( new Date());
+        calendar.add(Calendar.DATE, daysToRetrieveData*-1);
+        return calendar.getTimeInMillis();
+    }
+
+    public static String getMonth(long timestamp) {
+        Calendar calendar = Calendar.getInstance();
+        calendar.setTime( new Date(timestamp));
+        return Month.of(calendar.get( Calendar.MONTH)+1).getDisplayName(TextStyle.FULL, new Locale("en"));
     }
 }
