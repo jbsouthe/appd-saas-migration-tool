@@ -8,6 +8,10 @@ import com.cisco.josouthe.util.TimeUtil;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
+import java.io.BufferedReader;
+import java.io.FileReader;
+import java.io.IOException;
+import java.io.InputStreamReader;
 import java.util.*;
 
 public class Application implements Comparable<Application> {
@@ -22,7 +26,7 @@ public class Application implements Comparable<Application> {
     private Controller controller;
     private Map<String,MetricData> controllerMetricMap = new HashMap<>();
     private Map<Long, DatabaseMetricDefinition> metricsMap;
-    public boolean getAllAvailableMetrics=true;
+    public boolean getAllAvailableMetrics=false;
     private boolean finishedInitialization=false;
 
     public Application() {} //for GSON
@@ -41,7 +45,7 @@ public class Application implements Comparable<Application> {
         return controllerMetricMap.keySet();
     }
 
-    public MetricData getControllerMetricData( String metricName ) throws BadDataException {
+    public MetricData getControllerMetricData( String metricName ) {
         init();
         if( metricName.contains("*") )
             logger.warn("Metric name contains a wildcard, this means it could return many metrics, but this method is only looking for the first metric in that set, we are not expecting this: %s", metricName);
@@ -108,6 +112,12 @@ public class Application implements Comparable<Application> {
         return null;
     }
 
+    public BusinessTransaction getBusinessTransaction(Long btId) {
+        for( BusinessTransaction businessTransaction : businessTransactions )
+            if( businessTransaction.id == btId ) return businessTransaction;
+        return null;
+    }
+
     public Backend getBackend( String name ) {
         for( Backend backend : backends )
             if( backend.name.equals(name) ) return backend;
@@ -138,12 +148,40 @@ public class Application implements Comparable<Application> {
                 if( isFinishedInitialization() ) return; //only let the first one run, all others return quickly once unblocked
                 if (getAllAvailableMetrics) {
                     TreeNode[] folders = controller.getApplicationMetricFolders(this, "");
-                    logger.debug("Found %d folders we can go into", (folders == null ? "0" : folders.length));
+                    logger.debug("Application %s Found %d folders we can go into", this.name, (folders == null ? "0" : folders.length));
                     findMetrics(controller, folders, "");
                 } else {
-                    TreeNode[] folders = controller.getApplicationMetricFolders(this, "Application Infrastructure Performance");
-                    logger.debug("Found %d folders we can go into", (folders == null ? "0" : folders.length));
-                    findMetrics(controller, folders, "");
+                    switch (controller.getConfiguration().getMigrationLevel() ) {
+                        case 2: {
+                            /*
+                            TreeNode[] folders = controller.getApplicationMetricFolders(this, "Application Infrastructure Performance");
+                            logger.debug("Found %d folders we can go into", (folders == null ? "0" : folders.length));
+                            findMetrics(controller, folders, "");
+                             */
+                            try {
+                                for( MetricData metricData : initializeMetricCache("Application", "Tier", "Node", "Business Transaction") ) {
+                                    controllerMetricMap.put(metricData.metricName, metricData);
+                                }
+                            } catch (IOException e) {
+                                logger.warn("IOError initializing metrics from MetricPaths.csv, exception: %s", e.toString());
+                            }
+                            break;
+                        }
+                        case 1: {
+                            try {
+                                for( MetricData metricData : initializeMetricCache("Application") ) {
+                                    controllerMetricMap.put(metricData.metricName, metricData);
+                                }
+                            } catch (IOException e) {
+                                logger.warn("IOError initializing metrics from MetricPaths.csv, exception: %s", e.toString());
+                            }
+                            break;
+                        }
+                        default: {
+                            logger.warn("Unsupported Level configuration: %d Rethink your configuration file settings", controller.getConfiguration().getMigrationLevel());
+                        }
+
+                    }
                 }
                 this.finishedInitialization = true; //setting this here because we want to continue, even if partial data
             }
@@ -157,7 +195,7 @@ public class Application implements Comparable<Application> {
         for( TreeNode something : somethings ) {
             if( something.isFolder() ) {
                 findMetrics( controller, controller.getApplicationMetricFolders(this, path+something.name), path+something.name);
-            } else if( "Custom Metrics".contains(path + something.name)){
+            } else if( "Custom Metrics".contains(path + something.name)) {
                 logger.debug("Adding metric: %s%s",path,something.name);
                 controllerMetricMap.put(path+something.name, null);
             }
@@ -175,4 +213,29 @@ public class Application implements Comparable<Application> {
     }
 
     public boolean isControllerNull() { return controller == null; }
+
+    private List<MetricData> initializeMetricCache( String... types ) throws IOException {
+        List<MetricData> metricDataList = new ArrayList<>();
+        for( String type : types)
+            for( String metricPath : readMetricPathsForType(type) ) {
+                for( MetricData metricData : controller.getMetricValue(this.id, metricPath, true) )
+                    metricDataList.add(metricData);
+            }
+        return metricDataList;
+    }
+
+    private List<String> readMetricPathsForType(String type) throws IOException {
+        List<String> metricPaths = new ArrayList<>();
+        BufferedReader reader = new BufferedReader( new InputStreamReader( getClass().getResourceAsStream("/MetricPaths.csv")));
+        String line = reader.readLine();
+        while( line!=null && !line.isEmpty() ) {
+            String[] parts = line.split(",");
+            if( type.equals(parts[0])) {
+                metricPaths.add(parts[1]);
+            }
+            line = reader.readLine();
+        }
+        return metricPaths;
+    }
+
 }

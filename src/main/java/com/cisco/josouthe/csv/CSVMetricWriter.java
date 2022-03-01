@@ -53,6 +53,7 @@ public class CSVMetricWriter {
             SourceModel sourceModel = metricValueCollection.getSourceModel();
             for (DatabaseMetricValue metricValue : metricValueCollection.getMetrics()) {
                 DatabaseMetricDefinition metricDefinition = metricValueCollection.getMetricDefinition(metricValue);
+                if( metricDefinition == null ) continue;
                 String applicationName = sourceModel.getApplicationName(metricValue.application_id);
                 Long targetApplicationId = targetController.getEquivolentApplicationId(applicationName);
                 if( targetApplicationId == null ) {
@@ -113,38 +114,15 @@ public class CSVMetricWriter {
                             writeCSVValue(aPrinter, targetAccountId);
                             writeCSVValue(aPrinter, metricValue.group_count_val);
                             writeCSVValue(aPrinter, targetApplicationId, true);
-
                             break;
                         }
-                    /*
-                    case APPLICATION_COMPONENT:
-                        this.timeStamp = Long.toString(Long.parseLong(csvLine.get(0)) * MIN_TO_MILLIS_FACTOR);
-                        this.metricId = csvLine.get(1);
-                        this.tierId = csvLine.get(2);
-                        this.applicationId = csvLine.get(3);
-                        this.accountId = csvLine.get(4);
-                        this.groupCount = csvLine.get(5);
-                        this.count = csvLine.get(6);
-                        this.sum = csvLine.get(7);
-                        this.min = csvLine.get(8);
-                        this.max = csvLine.get(9);
-                        this.current = csvLine.get(10);
-                        if (includeWeightedValues) {
-                            this.weightValueSquare = csvLine.get(11);
-                            this.weightValue = csvLine.get(12);
-                        }
-                        this.timeRollupType = csvLine.get(13);
-                        this.clusterRollupType = csvLine.get(14);
-                        break;
-                     */
                         case "tier": {
                             Long targetTierId = targetController.getEquivolentTierId(targetApplicationId, sourceModel.getApplicationTierName(metricValue.application_id, metricValue.application_component_instance_id));
-                            writeCSVValue(acnPrinter, metricValue.ts_min);
+                            if( targetTierId == null ) continue;
+                            writeCSVValue(acnPrinter, metricValue.ts_min*60000);
                             writeCSVValue(acnPrinter, targetMetricId);
-                            writeCSVValue(acnPrinter, targetTierId);
-                            writeCSVValue(acnPrinter, targetApplicationId);
-                            writeCSVValue(acnPrinter, targetAccountId);
-                            writeCSVValue(acnPrinter, metricValue.group_count_val);
+                            writeCSVValue(acnPrinter, metricValue.rollup_type);
+                            writeCSVValue(acnPrinter, metricValue.cluster_rollup_type);
                             writeCSVValue(acnPrinter, metricValue.count_val);
                             writeCSVValue(acnPrinter, metricValue.sum_val);
                             writeCSVValue(acnPrinter, metricValue.min_val);
@@ -152,49 +130,32 @@ public class CSVMetricWriter {
                             writeCSVValue(acnPrinter, metricValue.cur_val);
                             writeCSVValue(acnPrinter, metricValue.weight_value_square);
                             writeCSVValue(acnPrinter, metricValue.weight_value);
-                            writeCSVValue(acnPrinter, metricDefinition.timeRollupType);
-                            writeCSVValue(acnPrinter, metricDefinition.clusterRollupType, true);
+                            writeCSVValue(acnPrinter, targetAccountId);
+                            writeCSVValue(acnPrinter, metricValue.group_count_val);
+                            writeCSVValue(acnPrinter, targetApplicationId);
+                            writeCSVValue(acnPrinter, targetTierId, true);
                             break;
                         }
-                    /*
-                    case APPLICATION_COMPONENT_NODE:
-                        this.timeStamp = Long.toString(Long.parseLong(csvLine.get(0)) * MIN_TO_MILLIS_FACTOR);
-                        this.metricId = csvLine.get(1);
-                        this.timeRollupType = csvLine.get(2);
-                        this.clusterRollupType = csvLine.get(3);
-                        this.nodeId = csvLine.get(4);
-                        this.tierId = csvLine.get(5);
-                        this.applicationId = csvLine.get(6);
-                        this.accountId = csvLine.get(7);
-                        this.count = csvLine.get(8);
-                        this.sum = csvLine.get(9);
-                        this.min = csvLine.get(10);
-                        this.max = csvLine.get(11);
-                        this.current = csvLine.get(12);
-                        if (includeWeightedValues) {
-                            this.weightValueSquare = csvLine.get(13);
-                            this.weightValue = csvLine.get(14);
-                        }
-                        break;
-                     */
                         case "node": {
                             Long targetTierId = targetController.getEquivolentTierId(targetApplicationId, sourceModel.getApplicationTierName(metricValue.application_id, metricValue.application_component_instance_id));
                             Long targetNodeId = targetController.getEquivolentNodeId(targetApplicationId, sourceModel.getApplicationTierNodeName(metricValue.application_id, metricValue.node_id));
-                            writeCSVValue(anPrinter, metricValue.ts_min);
+                            if( targetTierId == null || targetNodeId == null ) continue;
+                            writeCSVValue(anPrinter, metricValue.ts_min*60000);
                             writeCSVValue(anPrinter, targetMetricId);
-                            writeCSVValue(anPrinter, metricDefinition.timeRollupType);
-                            writeCSVValue(anPrinter, metricDefinition.clusterRollupType);
-                            writeCSVValue(anPrinter, targetNodeId);
-                            writeCSVValue(anPrinter, targetTierId);
-                            writeCSVValue(anPrinter, targetApplicationId);
-                            writeCSVValue(anPrinter, targetAccountId);
+                            writeCSVValue(anPrinter, metricValue.rollup_type);
+                            writeCSVValue(anPrinter, metricValue.cluster_rollup_type);
                             writeCSVValue(anPrinter, metricValue.count_val);
                             writeCSVValue(anPrinter, metricValue.sum_val);
                             writeCSVValue(anPrinter, metricValue.min_val);
                             writeCSVValue(anPrinter, metricValue.max_val);
                             writeCSVValue(anPrinter, metricValue.cur_val);
                             writeCSVValue(anPrinter, metricValue.weight_value_square);
-                            writeCSVValue(anPrinter, metricValue.weight_value, true);
+                            writeCSVValue(anPrinter, metricValue.weight_value);
+                            writeCSVValue(anPrinter, targetAccountId);
+                            writeCSVValue(anPrinter, 1);
+                            writeCSVValue(anPrinter, targetApplicationId);
+                            writeCSVValue(anPrinter, targetTierId);
+                            writeCSVValue(anPrinter, targetNodeId, true);
                             break;
                         }
                     }

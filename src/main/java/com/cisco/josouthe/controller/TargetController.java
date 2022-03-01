@@ -4,11 +4,13 @@ import com.cisco.josouthe.Configuration;
 import com.cisco.josouthe.controller.apidata.account.MyAccount;
 import com.cisco.josouthe.controller.apidata.metric.MetricData;
 import com.cisco.josouthe.controller.apidata.model.Application;
+import com.cisco.josouthe.controller.apidata.model.BusinessTransaction;
 import com.cisco.josouthe.controller.apidata.model.Node;
 import com.cisco.josouthe.controller.apidata.model.Tier;
 import com.cisco.josouthe.exceptions.BadDataException;
 import com.cisco.josouthe.exceptions.ControllerBadStatusException;
 import com.cisco.josouthe.exceptions.InvalidConfigurationException;
+import com.cisco.josouthe.util.Parser;
 
 public class TargetController extends Controller{
     private long accountId = -1;
@@ -43,22 +45,43 @@ public class TargetController extends Controller{
     }
 
     public Long getEquivolentMetricId(Long targetApplicationId, String databaseMetricName) throws BadDataException {
-        String metricName = convertMetricNameFromDatabaseFormToControllerAPIForm( databaseMetricName );
-        logger.debug("Metric search: appid: %d db metric name '%s' controller metric path '%s'", targetApplicationId, databaseMetricName, metricName);
         Application application = getApplication(targetApplicationId);
+        String metricPath = getControllerMetricPathFromDatabaseMetricName( application, databaseMetricName );
+        logger.debug("Metric search: appid: %d db metric name '%s' controller metric path '%s'", targetApplicationId, databaseMetricName, metricPath);
         if( application != null ) {
             if( application.isControllerNull() ) application.setController(this);
-            MetricData metricData = application.getControllerMetricData(metricName);
-            logger.debug("Metric Id on target controller: %s(%d)", metricData.metricName, metricData.metricId);
+            MetricData metricData = application.getControllerMetricData(metricPath);
+            if( metricData != null ) {
+                logger.debug("Metric Id on target controller: %s(%d)", metricData.metricName, metricData.metricId);
+            } else {
+                throw new BadDataException(String.format("Metric Data is null for metric path: %s", metricPath));
+            }
             if( metricData != null ) return metricData.metricId;
         }
         return null;
     }
 
-    private String convertMetricNameFromDatabaseFormToControllerAPIForm(String databaseMetricName) {
-        if( databaseMetricName.startsWith("BTM|Application Summary|") )
-            return databaseMetricName.replace("BTM|Application Summary|", "Overall Application Performance|");
-        return databaseMetricName;
+
+    public String getControllerMetricPathFromDatabaseMetricName(Application application, String databaseMetricName) {
+        Long optionalBTId = Parser.parseBTFromMetricName(databaseMetricName);
+        Long optionalComponentId = Parser.parseComponentFromMetricName(databaseMetricName);
+        if( optionalBTId != null ) {
+            //Get BT name with this btId
+            String name = getModel().getApplication(application.name).getBusinessTransaction(optionalBTId).name;
+            //Get target BTId from BT name
+            BusinessTransaction businessTransaction = application.getBusinessTransaction(name);
+            databaseMetricName = databaseMetricName.replaceAll("|BT:\\d+|", String.format("|BT:%d|",businessTransaction.id));
+        }
+        if( optionalComponentId != null ) {
+            //Get Tier name with this component id
+            String name = getModel().getApplication(application.name).getTier(optionalComponentId).name;
+            //get Target Tier Id with this tier name
+            Tier tier = application.getTier(name);
+            databaseMetricName = databaseMetricName.replaceAll( "|Component:\\d+|", String.format("|Component:%d|", tier.id));
+        }
+        MetricData metricData = application.getControllerMetricData(databaseMetricName);
+        if( metricData != null ) return metricData.metricPath;
+        return databaseMetricName; //give up, good luck
     }
 
     public Long getEquivolentTierId(Long targetApplicationId, String applicationTierName) {

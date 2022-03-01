@@ -87,6 +87,8 @@ public class Controller {
         getModel(); //initialize model
     }
 
+    public Configuration getConfiguration() { return configuration; }
+
     public Application getApplication( long id ) {
         for( Application application : getModel().getApplications() )
             if( application.id == id ) return application;
@@ -166,7 +168,7 @@ public class Controller {
         return true;
     }
 
-    public MetricData[] getMetricValue(long applicationId, String metricName, boolean rollup ) {
+    public MetricData[] getMetricValue(long applicationId, String metricPath, boolean rollup ) {
         MetricData[] metrics = null;
 
         int tries=0;
@@ -174,7 +176,7 @@ public class Controller {
         while (! succeeded && tries < 3 ) {
             try {
                 metrics = getMetricValue(String.format("%scontroller/rest/applications/%d/metric-data?metric-path=%s&time-range-type=BEFORE_NOW&duration-in-mins=60&output=JSON&rollup=%s",
-                        this.url, applicationId, Parser.encode(metricName), rollup)
+                        this.url, applicationId, Parser.encode(metricPath), rollup)
                 );
                 succeeded=true;
             } catch (ControllerBadStatusException controllerBadStatusException) {
@@ -183,7 +185,7 @@ public class Controller {
             }
         }
         if( !succeeded)
-            logger.warn("Gave up after %d tries, not getting %s back", tries, metricName);
+            logger.warn("Gave up after %d tries, not getting %s back", tries, metricPath);
         return metrics;
     }
 
@@ -334,6 +336,7 @@ public class Controller {
                 logger.trace("getApplicationsAllTypes returned: %s",json);
                 this.controllerModel = new Model(gson.fromJson(json, ApplicationListing.class));
                 for (Application application : this.controllerModel.getAPMApplications()) {
+                    application.setController(this);
                     json = getRequest("controller/rest/applications/%d/tiers?output=JSON", application.id);
                     for( Tier tier : gson.fromJson(json, Tier[].class) )
                         application.tiers.add(tier);

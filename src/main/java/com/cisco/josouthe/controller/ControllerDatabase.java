@@ -17,13 +17,15 @@ import java.util.List;
 public class ControllerDatabase {
     private static final Logger logger = LogManager.getFormatterLogger();
     private static final int MAX_RETRY_LIMIT = 3;
+    private static final String TABLE_APP_TEN_MIN = "metricdata_ten_min_agg_app";
+    private static final String TABLE_APP_ONE_HOUR = "metricdata_hour_agg_app";
     private String connectionString, user, pass;
     private SourceModel cached_model = null;
     private static final String sqlSelectAllIds = "select acc.id acc_id, acc.name acc_name, app.id app_id, app.name app_name, tier.id tier_id, tier.name tier_name, node.id node_id, node.name node_name from account acc, application app, application_component tier, application_component_node node where acc.id = app.account_id and app.id = tier.application_id and tier.id = node.application_component_id ";
     private static final String sqlSelectMetricDefinitions = "select m.id as metric_id, m.name as metric_name, m.application_id as application_id, app.name as application_name, m.time_rollup_type as time_rollup_type, m.cluster_rollup_type as cluster_rollup_type from metric as m, application as app where app.id = m.application_id and m.name not like \"%To:%\" and m.name not like \"%Th:%\" ";
     private static final String sqlSelectMetricData_hour_agg_app = "select ts_min, metric_id, application_id, group_count_val, count_val, sum_val, min_val, max_val, cur_val, weight_value_square, weight_value, rollup_type, cluster_rollup_type  from metricdata_hour_agg_app where ts_min > %d ";
     private static final String sqlSelectMetricData_hour_agg = "select ts_min, metric_id, application_id, group_count_val, count_val, sum_val, min_val, max_val, cur_val, weight_value_square, weight_value, application_component_instance_id, rollup_type, cluster_rollup_type from metricdata_hour_agg where ts_min > %d ";
-    private static final String sqlSelectMetricData_hour = "select ts_min, metric_id, application_id, group_count_val, count_val, sum_val, min_val, max_val, cur_val, weight_value_square, weight_value, application_component_instance_id, node_id, rollup_type, cluster_rollup_type from metricdata_hour where ts_min > %d ";
+    private static final String sqlSelectMetricData_hour = "select ts_min, metric_id, application_id, 1 as group_count_val, count_val, sum_val, min_val, max_val, cur_val, weight_value_square, weight_value, application_component_instance_id, node_id, rollup_type, cluster_rollup_type from metricdata_hour where ts_min > %d ";
     private static final String sqlWhereClauseLevelOne_ApplicationSummaryMetrics = " metric_id in (select id from metric where name like \"%BTM|Application Summary|%\" and name not like \"%|Component:%\") ";
     private String[] applicationsFilter;
 
@@ -129,6 +131,7 @@ public class ControllerDatabase {
                 return new MetricValueCollection( getModel(), metrics, days);
             }
         } catch (SQLException exception) {
+            logger.warn("SQL: '%s'",sqlQuery);
             logger.warn("Exception collecting hourly metrics from database: %s", exception.toString());
         }
         return null;
