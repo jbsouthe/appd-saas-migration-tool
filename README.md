@@ -30,3 +30,30 @@ this assumes the ./lib directory contains the jar files found in the package
 ##output is in a directory named ./test-data
 
 This generates files needed for import into the saas blitz datastore
+
+##Proxy Configuration
+
+If proxy support is required, set the following arguments before the -jar arguement:
+
+     -Djava.net.useSystemProxies=true
+
+or, to manually specify the host and port:
+
+     -Dhttp.proxyHost=PROXY_HOST
+     -Dhttp.proxyPort=PROXY_PORT
+
+or, to manually specify the host, port, and basic user and password:
+
+     -Dhttp.proxyHost=PROXY_HOST
+     -Dhttp.proxyPort=PROXY_PORT
+     -Dhttp.proxyUser=USERNAME
+     -Dhttp.proxyPassword=PASSWORD
+
+or, to manually specify the host, port, and NTLM authentication:
+
+     -Dhttp.proxyHost=PROXY_HOST
+     -Dhttp.proxyPort=PROXY_PORT
+     -Dhttp.proxyUser=USERNAME
+     -Dhttp.proxyPassword=PASSWORD
+     -Dhttp.proxyWorkstation=HOSTNAME
+     -Dhttp.proxyDomain=NT_DOMAIN
