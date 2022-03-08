@@ -23,6 +23,7 @@ public class Application implements Comparable<Application> {
     public List<Node> nodes = new ArrayList<>();
     public List<BusinessTransaction> businessTransactions = new ArrayList<>();
     public List<Backend> backends = new ArrayList<>();
+    public List<ServiceEndpoint> serviceEndpoints = new ArrayList<>();
     private Controller controller;
     private Map<String,MetricData> controllerMetricMap = new HashMap<>();
     private Map<Long, DatabaseMetricDefinition> metricsMap;
@@ -238,4 +239,18 @@ public class Application implements Comparable<Application> {
         return metricPaths;
     }
 
+    public ServiceEndpoint getServiceEndpoint(Long serviceEndpointId) {
+        for( ServiceEndpoint serviceEndpoint : serviceEndpoints )
+            if( serviceEndpoint.id == serviceEndpointId ) return serviceEndpoint;
+        return null;
+    }
+
+    public ServiceEndpoint getServiceEndpoint(ServiceEndpoint sourceServiceEndpoint) {
+        for( ServiceEndpoint serviceEndpoint : serviceEndpoints ) {
+            if( serviceEndpoint.name.equals(sourceServiceEndpoint.name)
+                    && serviceEndpoint.applicationComponent.name.equals(serviceEndpoint.applicationComponent.name))
+                return serviceEndpoint;
+        }
+        return null;
+    }
 }

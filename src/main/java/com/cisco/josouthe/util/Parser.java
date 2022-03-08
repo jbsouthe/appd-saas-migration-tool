@@ -21,6 +21,8 @@ public class Parser {
     private static Pattern patternNodeNameInMetricPath = Pattern.compile("|Individual\\sNodes|(?<nodeName>[^|]+)|.*");
     private static Pattern patternBTIdInMetricName = Pattern.compile("|BT:(?<btId>\\d+)|");
     private static Pattern patternComponentIdInMetricName = Pattern.compile("|Component:(?<componentId>\\d+)|");
+    private static Pattern patternSEIdInMetricName = Pattern.compile("|SE:(?<seId>\\d+)|");
+
 
     private static SimpleDateFormat simpleDateFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSXXX");
     private static Set<DataScope> snapshotDatascope;
@@ -61,6 +63,14 @@ public class Parser {
         Matcher matcher = patternComponentIdInMetricName.matcher(name);
         if( matcher.matches() ) {
             return Long.parseLong(matcher.group("componentId"));
+        }
+        return null;
+    }
+
+    public static Long parseSEFromMetricName( String name ) {
+        Matcher matcher = patternSEIdInMetricName.matcher(name);
+        if( matcher.matches() ) {
+            return Long.parseLong(matcher.group("seId"));
         }
         return null;
     }

@@ -27,6 +27,7 @@ public class ControllerDatabase {
     private static final String sqlSelectMetricData_hour_agg = "select ts_min, metric_id, application_id, group_count_val, count_val, sum_val, min_val, max_val, cur_val, weight_value_square, weight_value, application_component_instance_id, rollup_type, cluster_rollup_type from metricdata_hour_agg where ts_min > %d ";
     private static final String sqlSelectMetricData_hour = "select ts_min, metric_id, application_id, 1 as group_count_val, count_val, sum_val, min_val, max_val, cur_val, weight_value_square, weight_value, application_component_instance_id, node_id, rollup_type, cluster_rollup_type from metricdata_hour where ts_min > %d ";
     private static final String sqlWhereClauseLevelOne_ApplicationSummaryMetrics = " metric_id in (select id from metric where name like \"%BTM|Application Summary|%\" and name not like \"%|Component:%\") ";
+    private static final String sqlSelectAllServiceEndpoints = "select se.id as se_id, se.name as se_name, se.entry_point_type as se_type, se.entity_type as se_entity_type, tier.id as tier_id, tier.name as tier_name, app.id as app_id, app.name as app_name from service_endpoint_definition se, application_component tier, application app where tier.id = se.entity_id and app.id = tier.application_id ";
     private String[] applicationsFilter;
 
     public ControllerDatabase(String connectionString, String dbUser, String dbPassword, List<String> applicationsFilterList) {
@@ -64,6 +65,15 @@ public class ControllerDatabase {
                 try (ResultSet resultSet = statement.executeQuery()) {
                     cached_model = new SourceModel(resultSet);
                     getMetricDefinitions(cached_model);
+                }
+            } catch (SQLException exception) {
+                logger.warn("Exception building controller model from database: %s", exception.toString());
+            }
+            try (Connection connection = getConnection();
+                 PreparedStatement statement = connection.prepareStatement(sqlSelectAllServiceEndpoints); ) {
+                logger.debug("Running Query: %s",sqlSelectAllServiceEndpoints);
+                try (ResultSet resultSet = statement.executeQuery()) {
+                    cached_model.addServiceEndpoints(resultSet);
                 }
             } catch (SQLException exception) {
                 logger.warn("Exception building controller model from database: %s", exception.toString());

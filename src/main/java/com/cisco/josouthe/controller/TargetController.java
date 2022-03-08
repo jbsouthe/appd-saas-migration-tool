@@ -3,10 +3,7 @@ package com.cisco.josouthe.controller;
 import com.cisco.josouthe.Configuration;
 import com.cisco.josouthe.controller.apidata.account.MyAccount;
 import com.cisco.josouthe.controller.apidata.metric.MetricData;
-import com.cisco.josouthe.controller.apidata.model.Application;
-import com.cisco.josouthe.controller.apidata.model.BusinessTransaction;
-import com.cisco.josouthe.controller.apidata.model.Node;
-import com.cisco.josouthe.controller.apidata.model.Tier;
+import com.cisco.josouthe.controller.apidata.model.*;
 import com.cisco.josouthe.exceptions.BadDataException;
 import com.cisco.josouthe.exceptions.ControllerBadStatusException;
 import com.cisco.josouthe.exceptions.InvalidConfigurationException;
@@ -65,19 +62,29 @@ public class TargetController extends Controller{
     public String getControllerMetricPathFromDatabaseMetricName(Application application, String databaseMetricName) {
         Long optionalBTId = Parser.parseBTFromMetricName(databaseMetricName);
         Long optionalComponentId = Parser.parseComponentFromMetricName(databaseMetricName);
-        if( optionalBTId != null ) {
-            //Get BT name with this btId
-            String name = getModel().getApplication(application.name).getBusinessTransaction(optionalBTId).name;
-            //Get target BTId from BT name
-            BusinessTransaction businessTransaction = application.getBusinessTransaction(name);
-            databaseMetricName = databaseMetricName.replaceAll("|BT:\\d+|", String.format("|BT:%d|",businessTransaction.id));
-        }
-        if( optionalComponentId != null ) {
-            //Get Tier name with this component id
-            String name = getModel().getApplication(application.name).getTier(optionalComponentId).name;
-            //get Target Tier Id with this tier name
-            Tier tier = application.getTier(name);
-            databaseMetricName = databaseMetricName.replaceAll( "|Component:\\d+|", String.format("|Component:%d|", tier.id));
+        Long optionalServiceEndpointId = Parser.parseSEFromMetricName(databaseMetricName);
+        try {
+            if (optionalBTId != null) {
+                //Get BT name with this btId
+                String name = getModel().getApplication(application.name).getBusinessTransaction(optionalBTId).name;
+                //Get target BTId from BT name
+                BusinessTransaction businessTransaction = application.getBusinessTransaction(name);
+                databaseMetricName = databaseMetricName.replaceAll("|BT:\\d+|", String.format("|BT:%d|", businessTransaction.id));
+            }
+            if (optionalComponentId != null) {
+                //Get Tier name with this component id
+                String name = getModel().getApplication(application.name).getTier(optionalComponentId).name;
+                //get Target Tier Id with this tier name
+                Tier tier = application.getTier(name);
+                databaseMetricName = databaseMetricName.replaceAll("|Component:\\d+|", String.format("|Component:%d|", tier.id));
+            }
+            if (optionalServiceEndpointId != null) {
+                ServiceEndpoint serviceEndpoint = getModel().getApplication(application.name).getServiceEndpoint(optionalServiceEndpointId);
+                ServiceEndpoint targetServiceEndpoint = application.getServiceEndpoint(serviceEndpoint);
+                databaseMetricName = databaseMetricName.replaceAll("|SE:\\d+|", String.format("|SE:%d|", targetServiceEndpoint.id));
+            }
+        }catch (NullPointerException nullPointerException ) {
+            logger.warn("Null Pointer Exception in attempts to map optional metric parts to target controller: %s, cause: %s",nullPointerException.toString(),nullPointerException.getCause().toString());
         }
         MetricData metricData = application.getControllerMetricData(databaseMetricName);
         if( metricData != null ) return metricData.metricPath;

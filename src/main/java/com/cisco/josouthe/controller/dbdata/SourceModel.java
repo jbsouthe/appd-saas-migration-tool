@@ -1,9 +1,6 @@
 package com.cisco.josouthe.controller.dbdata;
 
-import com.cisco.josouthe.controller.apidata.model.Account;
-import com.cisco.josouthe.controller.apidata.model.Application;
-import com.cisco.josouthe.controller.apidata.model.Node;
-import com.cisco.josouthe.controller.apidata.model.Tier;
+import com.cisco.josouthe.controller.apidata.model.*;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -140,4 +137,12 @@ public class SourceModel {
         return "UNKNOWN_NODE";
     }
 
+    public void addServiceEndpoints(ResultSet resultSet) throws SQLException {
+        while( resultSet.next() ){
+            long applicationId = resultSet.getLong("app_id");
+            long tierId = resultSet.getLong("tier_id");
+            Application application = getApplication(applicationId);
+            application.serviceEndpoints.add(new ServiceEndpoint(resultSet, application.getTier(tierId)));
+        }
+    }
 }

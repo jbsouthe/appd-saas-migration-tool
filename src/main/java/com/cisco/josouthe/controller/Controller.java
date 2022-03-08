@@ -329,6 +329,24 @@ public class Controller {
         return _applicationIdMap.get(name);
     }
 
+    public List<ServiceEndpoint> getServiceEndpoints( long applicationId ) throws ControllerBadStatusException {
+        long timestamp = TimeUtil.now();
+        return getServiceEndpoints(applicationId, timestamp-60000, timestamp);
+    }
+
+    public List<ServiceEndpoint> getServiceEndpoints( long applicationId, long startTimestamp, long endTimestamp ) throws ControllerBadStatusException {
+        String postBody = String.format("{\"requestFilter\":{\"queryParams\":{\"applicationId\":%d,\"mode\":\"FILTER_EXCLUDED\"},\n" +
+                "    \"searchText\":\"\",\n" +
+                "    \"filters\":{\"sepPerfData\":{\"responseTime\":0,\"callsPerMinute\":0},\"type\":[],\"sepName\":[]}},\n" +
+                "    \"columnSorts\":[{\"column\":\"NAME\",\"direction\":\"ASC\"}],\n" +
+                "    \"timeRangeStart\":%d,\n" +
+                "    \"timeRangeEnd\":%d}", applicationId, startTimestamp, endTimestamp);
+        String json = postRequest("controller/restui/serviceEndpoint/list", postBody);
+        ServiceEndpointResponse serviceEndpointResponse = gson.fromJson(json, ServiceEndpointResponse.class);
+        if( serviceEndpointResponse != null ) return serviceEndpointResponse.data;
+        return null;
+    }
+
     public Model getModel() {
         if( this.controllerModel == null ) {
             try {
@@ -349,6 +367,7 @@ public class Controller {
                     json = getRequest("controller/rest/applications/%d/backends?output=JSON", application.id);
                     for( Backend backend : gson.fromJson(json, Backend[].class))
                         application.backends.add(backend);
+                    application.serviceEndpoints.addAll( getServiceEndpoints(application.id));
                 }
             } catch (ControllerBadStatusException controllerBadStatusException) {
                 logger.warn("Giving up on getting controller model, not even going to retry");
@@ -382,5 +401,9 @@ public class Controller {
 
     public void discardToken() {
         this.accessToken=null;
+    }
+
+    public class ServiceEndpointResponse{
+        public List<ServiceEndpoint> data;
     }
 }
