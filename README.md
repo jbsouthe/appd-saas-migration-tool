@@ -1,10 +1,10 @@
-#How to run this
+# How to run this
 
 java -jar SaaSMigrationTool-1.0-20220223.jar test-db.xml
 
 this assumes the ./lib directory contains the jar files found in the package
 
-##that config file looks like this:
+## that config file looks like this:
 
     <Migration>
         <MigrationLevel>1</MigrationLevel> <!--only use 1 for now;  1, 2, or 3 KISS 1=Application level, 2= 1+Tier+BT, 3= 2+Node+Backends+anything else we can find -->
@@ -27,11 +27,11 @@ this assumes the ./lib directory contains the jar files found in the package
         </Source>
     </Migration>
 
-##output is in a directory named ./test-data
+## output is in a directory named ./test-data
 
 This generates files needed for import into the saas blitz datastore
 
-##Proxy Configuration
+## Proxy Configuration
 
 If proxy support is required, set the following arguments before the -jar arguement:
 
