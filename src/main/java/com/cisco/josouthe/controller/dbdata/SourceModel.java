@@ -75,6 +75,7 @@ public class SourceModel {
             Application application = account.getApplication(id);
             if( application != null ) return application;
         }
+        //logger.warn("Application not found for id: %d", id);
         return null;
     }
     public String getApplicationName( long appId ) {
@@ -142,7 +143,9 @@ public class SourceModel {
             long applicationId = resultSet.getLong("app_id");
             long tierId = resultSet.getLong("tier_id");
             Application application = getApplication(applicationId);
-            application.serviceEndpoints.add(new ServiceEndpoint(resultSet, application.getTier(tierId)));
+            if( application != null ) {
+                application.serviceEndpoints.add(new ServiceEndpoint(resultSet, application.getTier(tierId)));
+            }
         }
     }
 }
