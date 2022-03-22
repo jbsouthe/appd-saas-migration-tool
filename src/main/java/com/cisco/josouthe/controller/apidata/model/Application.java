@@ -26,6 +26,7 @@ public class Application implements Comparable<Application> {
     public List<ServiceEndpoint> serviceEndpoints = new ArrayList<>();
     private Controller controller;
     private Map<String,MetricData> controllerMetricMap = new HashMap<>();
+    private Map<String,Integer> controllerMetricLookupCountMap = new HashMap<>();
     private Map<Long, DatabaseMetricDefinition> metricsMap;
     public boolean getAllAvailableMetrics=false;
     private boolean finishedInitialization=false;
@@ -51,17 +52,24 @@ public class Application implements Comparable<Application> {
         if( metricName.contains("*") )
             logger.warn("Metric name contains a wildcard, this means it could return many metrics, but this method is only looking for the first metric in that set, we are not expecting this: %s", metricName);
         MetricData metricData = controllerMetricMap.get(metricName);
-        if( metricData == null ) {
+        if( metricData == null && getControllerMetricLookupCount(metricName) <= 3 ) {
             for( MetricData metric : controller.getMetricValue(this.id, metricName, true) ) {
                 if( metric.metricPath.equals(metricName) ) metricData = metric;
             }
             /* if( "METRIC DATA NOT FOUND".equals(metricData.metricName) ) { //oh man, this isn't good
                 throw new BadDataException(String.format("Got a METRIC DATA NOT FOUND while trying to find a metric id, this may be a problem, metric returned: %s(%d)", metricData.metricName, metricData.metricId));
             } */
-            if( metricData != null )
-                controllerMetricMap.put(metricName,metricData);
+            if( metricData != null ) {
+                controllerMetricMap.put(metricName, metricData);
+            } else {
+                controllerMetricLookupCountMap.put(metricName, getControllerMetricLookupCount(metricName)+1);
+            }
         }
         return metricData;
+    }
+
+    private int getControllerMetricLookupCount(String metricName) {
+        return controllerMetricLookupCountMap.getOrDefault(metricName, 0);
     }
 
 
