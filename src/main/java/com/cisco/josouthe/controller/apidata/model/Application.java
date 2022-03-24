@@ -54,13 +54,15 @@ public class Application implements Comparable<Application> {
         MetricData metricData = controllerMetricMap.get(metricName);
         if( metricData == null && getControllerMetricLookupCount(metricName) <= 3 ) {
             for( MetricData metric : controller.getMetricValue(this.id, metricName, true) ) {
-                if( metric.metricPath.equals(metricName) ) metricData = metric;
+                //if( metric.metricPath.equals(metricName) ) metricData = metric;
+                metricData=metric;
             }
             /* if( "METRIC DATA NOT FOUND".equals(metricData.metricName) ) { //oh man, this isn't good
                 throw new BadDataException(String.format("Got a METRIC DATA NOT FOUND while trying to find a metric id, this may be a problem, metric returned: %s(%d)", metricData.metricName, metricData.metricId));
             } */
             if( metricData != null ) {
                 controllerMetricMap.put(metricName, metricData);
+                logger.info("Metric %s returning metric id %d", metricName, metricData.metricId);
             } else {
                 controllerMetricLookupCountMap.put(metricName, getControllerMetricLookupCount(metricName)+1);
             }

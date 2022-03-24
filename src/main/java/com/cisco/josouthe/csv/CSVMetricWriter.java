@@ -51,6 +51,7 @@ public class CSVMetricWriter {
             open();
             long targetAccountId = this.targetController.getAccountId();
             SourceModel sourceModel = metricValueCollection.getSourceModel();
+            long counter=0;
             for (DatabaseMetricValue metricValue : metricValueCollection.getMetrics()) {
                 DatabaseMetricDefinition metricDefinition = metricValueCollection.getMetricDefinition(metricValue);
                 if( metricDefinition == null ) continue;
@@ -159,8 +160,10 @@ public class CSVMetricWriter {
                             break;
                         }
                     }
+                counter++;
             }
             flush();
+            logger.info("Wrote %d of %d metrics to CSV files", counter, metricValueCollection.getMetrics().size());
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
@@ -186,7 +189,7 @@ public class CSVMetricWriter {
         }
     }
 
-    public void close() throws IOException {
+    public synchronized void close() throws IOException {
         if( isOpen ) {
             acnPrinter.flush();
             acnWriter.close();

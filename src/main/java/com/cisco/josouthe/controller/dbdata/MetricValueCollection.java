@@ -11,13 +11,11 @@ public class MetricValueCollection {
     private static final Logger logger = LogManager.getFormatterLogger();
     private SourceModel sourceModel;
     private List<DatabaseMetricValue> metricValueList;
-    private int days;
 
-    public MetricValueCollection( SourceModel model, List<DatabaseMetricValue> metrics, int days ) {
+    public MetricValueCollection( SourceModel model, List<DatabaseMetricValue> metrics ) {
         this.sourceModel = model;
         this.metricValueList = new ArrayList<>();
         this.metricValueList.addAll(metrics);
-        this.days = days;
     }
 
     public List<DatabaseMetricValue> getMetrics() { return metricValueList; }

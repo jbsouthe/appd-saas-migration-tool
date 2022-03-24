@@ -32,7 +32,7 @@ public class TimeUtil {
         return Parser.encode(getDateString(dateTime));
     }
 
-    public static long now() { return new Date().getTime(); }
+    public static long now() { return System.currentTimeMillis(); }
 
     public static boolean isThisStringADate(String data) {
         if( data == null ) return false;

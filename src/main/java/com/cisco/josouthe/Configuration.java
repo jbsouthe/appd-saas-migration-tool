@@ -23,6 +23,7 @@ public class Configuration {
     private ArrayList<ControllerDatabase> sourceControllers = new ArrayList<>();
     private ArrayList<String> applicationFilterList = new ArrayList<>();
     private ArrayList<String> metrics = new ArrayList<>();
+    private boolean running=true;
 
     public String getProperty( String key ) {
         return getProperty(key, (String)null);
@@ -61,7 +62,8 @@ public class Configuration {
         digester.addCallMethod("Migration/MigrationLevel", "setMigrationLevel", 0);
         digester.addCallMethod("Migration/DaysToRetrieve", "setDaysToRetrieve", 0);
         digester.addCallMethod("Migration/OutputDir", "setOutputDir", 0);
-
+        digester.addCallMethod("Migration/NumberOfDatabaseThreads", "setNumberOfDatabaseThreads", 0);
+        digester.addCallMethod("Migration/NumberOfWriterThreads", "setNumberOfWriterThreads", 0);
 
         //Target controller section, this is where we plan to create insertable data for
         digester.addCallMethod("Migration/TargetController", "addTargetController", 3);
@@ -96,6 +98,14 @@ public class Configuration {
         this.daysToRetrieveData = Integer.parseInt(numberOfDays);
     }
 
+    public void setNumberOfDatabaseThreads( String numberOfThreads ) throws InvalidConfigurationException {
+        this.properties.setProperty("scheduler-NumberOfDatabaseThreads", numberOfThreads);
+    }
+
+    public void setNumberOfWriterThreads( String numberOfThreads ) throws InvalidConfigurationException {
+        this.properties.setProperty("scheduler-NumberOfWriterThreads", numberOfThreads);
+    }
+
     public void setOutputDir( String outputDir ) throws InvalidConfigurationException {
         this.outputDir = outputDir;
     }
@@ -113,4 +123,10 @@ public class Configuration {
         this.applicationFilterList.clear();
         this.sourceControllers.add(controllerDatabase);
     }
+
+    public boolean isRunning() {
+        return running;
+    }
+
+    public void setRunning(boolean b) { this.running=b; }
 }

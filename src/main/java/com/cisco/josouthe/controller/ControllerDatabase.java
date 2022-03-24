@@ -23,9 +23,9 @@ public class ControllerDatabase {
     private SourceModel cached_model = null;
     private static final String sqlSelectAllIds = "select acc.id acc_id, acc.name acc_name, app.id app_id, app.name app_name, tier.id tier_id, tier.name tier_name, node.id node_id, node.name node_name from account acc, application app, application_component tier, application_component_node node where acc.id = app.account_id and app.id = tier.application_id and tier.id = node.application_component_id ";
     private static final String sqlSelectMetricDefinitions = "select m.id as metric_id, m.name as metric_name, m.application_id as application_id, app.name as application_name, m.time_rollup_type as time_rollup_type, m.cluster_rollup_type as cluster_rollup_type from metric as m, application as app where app.id = m.application_id and m.name not like \"%To:%\" and m.name not like \"%Th:%\" ";
-    private static final String sqlSelectMetricData_hour_agg_app = "select ts_min, metric_id, application_id, group_count_val, count_val, sum_val, min_val, max_val, cur_val, weight_value_square, weight_value, rollup_type, cluster_rollup_type  from metricdata_hour_agg_app where ts_min > %d ";
-    private static final String sqlSelectMetricData_hour_agg = "select ts_min, metric_id, application_id, group_count_val, count_val, sum_val, min_val, max_val, cur_val, weight_value_square, weight_value, application_component_instance_id, rollup_type, cluster_rollup_type from metricdata_hour_agg where ts_min > %d ";
-    private static final String sqlSelectMetricData_hour = "select ts_min, metric_id, application_id, 1 as group_count_val, count_val, sum_val, min_val, max_val, cur_val, weight_value_square, weight_value, application_component_instance_id, node_id, rollup_type, cluster_rollup_type from metricdata_hour where ts_min > %d ";
+    private static final String sqlSelectMetricData_hour_agg_app = "select ts_min, metric_id, application_id, group_count_val, count_val, sum_val, min_val, max_val, cur_val, weight_value_square, weight_value, rollup_type, cluster_rollup_type  from metricdata_hour_agg_app where ts_min > %d and ts_min < %d ";
+    private static final String sqlSelectMetricData_hour_agg = "select ts_min, metric_id, application_id, group_count_val, count_val, sum_val, min_val, max_val, cur_val, weight_value_square, weight_value, application_component_instance_id, rollup_type, cluster_rollup_type from metricdata_hour_agg where ts_min > %d and ts_min < %d ";
+    private static final String sqlSelectMetricData_hour = "select ts_min, metric_id, application_id, 1 as group_count_val, count_val, sum_val, min_val, max_val, cur_val, weight_value_square, weight_value, application_component_instance_id, node_id, rollup_type, cluster_rollup_type from metricdata_hour where ts_min > %d and ts_min < %d ";
     private static final String sqlWhereClauseLevelOne_ApplicationSummaryMetrics = " metric_id in (select id from metric where name like \"%BTM|Application Summary|%\" and name not like \"%|Component:%\") ";
     private static final String sqlSelectAllServiceEndpoints = "select se.id as se_id, se.name as se_name, se.entry_point_type as se_type, se.entity_type as se_entity_type, tier.id as tier_id, tier.name as tier_name, app.id as app_id, app.name as app_name from service_endpoint_definition se, application_component tier, application app where tier.id = se.entity_id and app.id = tier.application_id ";
     private String[] applicationsFilter;
@@ -39,6 +39,8 @@ public class ControllerDatabase {
         getModel();
         logger.info("Initialized Controller Database Connection. applications: %d", getModel().getApplicationCount() );
     }
+
+    public String toString() { return connectionString; }
 
     private boolean applyApplicationFilters() { return applicationsFilter != null; }
 
@@ -95,20 +97,25 @@ public class ControllerDatabase {
     }
 
     public MetricValueCollection getAllMetrics( String type, int level, int days ) throws InvalidConfigurationException {
+        return getAllMetrics(type,level, TimeUtil.now(), TimeUtil.getDaysBackTimestamp(days) );
+    }
+
+    public MetricValueCollection getAllMetrics( String type, int level, long startTimestamp, long endTimestamp ) throws InvalidConfigurationException {
         List<DatabaseMetricValue> metrics = new ArrayList<>();
         String sqlQuery = "";
-        long startTimestampMin = TimeUtil.getDaysBackTimestamp(days)/60000;
+        long startTimestampMin = startTimestamp/60000;
+        long endTimestampMin = endTimestamp/60000;
         switch(type) {
             case "app": {
-                sqlQuery = String.format(sqlSelectMetricData_hour_agg_app, startTimestampMin);
+                sqlQuery = String.format(sqlSelectMetricData_hour_agg_app, endTimestampMin, startTimestampMin);
                 break;
             }
             case "tier": {
-                sqlQuery = String.format(sqlSelectMetricData_hour_agg, startTimestampMin);
+                sqlQuery = String.format(sqlSelectMetricData_hour_agg, endTimestampMin, startTimestampMin);
                 break;
             }
             case "node": {
-                sqlQuery = String.format(sqlSelectMetricData_hour, startTimestampMin);
+                sqlQuery = String.format(sqlSelectMetricData_hour, endTimestampMin, startTimestampMin);
                 break;
             }
             default: throw new InvalidConfigurationException(String.format("Can not run metric query for type %s",type));
@@ -125,7 +132,7 @@ public class ControllerDatabase {
                 sb.append( getModel().getApplication( this.applicationsFilter[i] ).id );
                 if( i+1 < this.applicationsFilter.length ) sb.append(", ");
             }
-            sb.append(") ");
+            sb.append(" ) ");
             sqlQuery = sb.toString();
         }
         try (Connection connection = getConnection();
@@ -138,7 +145,7 @@ public class ControllerDatabase {
                         logger.warn("Error building data metric from row, message: %s", resultSet.getWarnings().getMessage());
                     }
                 }
-                return new MetricValueCollection( getModel(), metrics, days);
+                return new MetricValueCollection( getModel(), metrics);
             }
         } catch (SQLException exception) {
             logger.warn("SQL: '%s'",sqlQuery);

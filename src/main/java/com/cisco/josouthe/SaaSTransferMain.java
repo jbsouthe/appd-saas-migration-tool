@@ -5,6 +5,7 @@ import com.cisco.josouthe.controller.ControllerDatabase;
 import com.cisco.josouthe.controller.dbdata.MetricValueCollection;
 import com.cisco.josouthe.csv.CSVMetricWriter;
 import com.cisco.josouthe.exceptions.InvalidConfigurationException;
+import com.cisco.josouthe.scheduler.MainControlScheduler;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.xml.sax.SAXException;
@@ -32,38 +33,10 @@ public class SaaSTransferMain {
             return;
         }
 
-        CSVMetricWriter csvMetricWriter = config.getCSVMetricWriter();
-        for( ControllerDatabase controllerDatabase : config.getControllerList() ) {
-            switch (config.getMigrationLevel()) { //1 = App, 2 = 1+Tiers+nodes, 3= 2+BT+ALL
-                case 3: { //TODO implement the deeper methods
-                }
-                case 2: {
-                    try {
-                        csvMetricWriter.writeMetricsToFile(controllerDatabase.getAllMetrics("node", config.getMigrationLevel(), config.getDaysToRetrieveData()));
-                    } catch (InvalidConfigurationException e) {
-                        logger.warn("Could not get metrics for controller %s, because: %s", controllerDatabase.toString(), e.toString());
-                    }
-                    try {
-                        csvMetricWriter.writeMetricsToFile(controllerDatabase.getAllMetrics("tier", config.getMigrationLevel(), config.getDaysToRetrieveData()));
-                    } catch (InvalidConfigurationException e) {
-                        logger.warn("Could not get metrics for controller %s, because: %s", controllerDatabase.toString(), e.toString());
-                    }
-                }
-                case 1: {
-                    try {
-                        csvMetricWriter.writeMetricsToFile(controllerDatabase.getAllMetrics("app", config.getMigrationLevel(), config.getDaysToRetrieveData()));
-                    } catch (InvalidConfigurationException e) {
-                        logger.warn("Could not get metrics for controller %s, because: %s", controllerDatabase.toString(), e.toString());
-                    }
-                }
+        MainControlScheduler mainControlScheduler = new MainControlScheduler( config );
+        mainControlScheduler.run();
 
-            }
-        }
-        try {
-            csvMetricWriter.close();
-        } catch (IOException e) {
-            logger.warn("Error closing csv output files: %s",e.toString());
-        }
+
 
     }
 }
