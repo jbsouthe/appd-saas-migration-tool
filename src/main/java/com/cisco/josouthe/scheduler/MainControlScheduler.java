@@ -23,12 +23,12 @@ public class MainControlScheduler {
         this.configuration = config;
         dataToInsertLinkedBlockingQueue = new LinkedBlockingQueue<>();
         executorFetchData = (ThreadPoolExecutor) Executors.newFixedThreadPool( this.configuration.getProperty("scheduler-NumberOfDatabaseThreads", 15), new NamedThreadFactory("Database") );
-        executorInsertData = (ThreadPoolExecutor) Executors.newFixedThreadPool( this.configuration.getProperty("scheduler-NumberOfWriterThreads", 3), new NamedThreadFactory("CSVWriter") );
+        executorInsertData = (ThreadPoolExecutor) Executors.newFixedThreadPool( this.configuration.getProperty("scheduler-NumberOfWriterThreads", 30), new NamedThreadFactory("CSVWriter") );
     }
 
     public void run() {
         this.configuration.setRunning(true);
-        for( int i=0; i < this.configuration.getProperty("scheduler-NumberOfWriterThreads", 3); i++) {
+        for( int i=0; i < this.configuration.getProperty("scheduler-NumberOfWriterThreads", 30); i++) {
             executorInsertData.execute( new CSVWriterTask(configuration, dataToInsertLinkedBlockingQueue));
         }
         logger.info("Started %d CSV File Writer Tasks, all looking for work", executorInsertData.getPoolSize());
@@ -52,6 +52,7 @@ public class MainControlScheduler {
 
             }
         }
+        logger.info("Scheduled a total of %d jobs to run fetching data for export to CSV", futures.size());
         for (Future<?> future:futures) {
             try {
                 future.get();
@@ -61,9 +62,11 @@ public class MainControlScheduler {
                 e.printStackTrace();
             }
         }
+        logger.info("All Data Fetch jobs scheduled have completed, now waiting for the CSV Writers to finish processing");
         while(!dataToInsertLinkedBlockingQueue.isEmpty()) {
             sleep(5000);
         }
+        logger.info("Everything is written, shutting everything down");
         configuration.setRunning(false);
         sleep(10000); //so database workers can finish up
         executorInsertData.shutdown();
