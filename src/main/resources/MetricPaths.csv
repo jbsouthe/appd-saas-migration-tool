@@ -1,9 +1,14 @@
 EntityType,MetricPath,MetricName,FolderName,RangeRollupType,Graph,Axis,LineColor,MetricSet
 App,Overall Application Performance|Average Response Time (ms),Average Response Time (ms),ART,AVERAGE,CallsAndResponse,SECONDARY,108000,TransactionApplication
+App,Overall Application Performance|Average End to End Latency (ms),Average End to End Latency (ms)
 App,Overall Application Performance|Calls per Minute,Calls per Minute,CPM,SUM,CallsAndResponse,PRIMARY,0000FF,TransactionApplication
 App,Overall Application Performance|Errors per Minute,Errors per Minute,EPM,SUM,CallsAndResponse,PRIMARY,FF0000,TransactionApplication
 App,Overall Application Performance|Exceptions per Minute,Exceptions per Minute,EXCPM,SUM,CallsAndResponse,PRIMARY,FFA500,TransactionApplication
 App,Overall Application Performance|HTTP Error Codes per Minute,HTTP Error Codes per Minute,HTTPEPM,SUM,CallsAndResponse,PRIMARY,FFC0CB,TransactionApplication
+App,Overall Application Performance|Number of Slow Calls
+App,Overall Application Performance|Number of Very Slow Calls
+Tier,Overall Application Performance|*|Number of Slow Calls
+Tier,Overall Application Performance|*|Number of Very Slow Calls
 Tier,Overall Application Performance|*|Average Response Time (ms),Average Response Time (ms),ART,AVERAGE,CallsAndResponse,SECONDARY,108000,TransactionTier
 Tier,Overall Application Performance|*|Calls per Minute,Calls per Minute,CPM,SUM,CallsAndResponse,PRIMARY,0000FF,TransactionTier
 Tier,Overall Application Performance|*|Errors per Minute,Errors per Minute,EPM,SUM,CallsAndResponse,PRIMARY,FF0000,TransactionTier
@@ -134,27 +139,27 @@ Node,Application Infrastructure Performance|*|Individual Nodes|*|JMX|Web Contain
 Backend,Backends|*|Average Response Time (ms),Average Response Time (ms),ART,AVERAGE,CallsAndResponse,SECONDARY,108000,TransactionBackend
 Backend,Backends|*|Calls per Minute,Calls per Minute,CPM,SUM,CallsAndResponse,PRIMARY,0000FF,TransactionBackend
 Backend,Backends|*|Errors per Minute,Errors per Minute,EPM,SUM,CallsAndResponse,PRIMARY,FF0000,TransactionBackend
-Business Transaction,Business Transaction Performance|Business Transactions|*|*|Average Response Time (ms),Average Response Time (ms),ART,AVERAGE,CallsAndResponse,SECONDARY,108000,TransactionBT
-Business Transaction,Business Transaction Performance|Business Transactions|*|*|Calls per Minute,Calls per Minute,CPM,SUM,CallsAndResponse,PRIMARY,0000FF,TransactionBT
-Business Transaction,Business Transaction Performance|Business Transactions|*|*|Errors per Minute,Errors per Minute,EPM,SUM,CallsAndResponse,PRIMARY,FF0000,TransactionBT
-Business Transaction,Business Transaction Performance|Business Transactions|*|*|95th Percentile Response Time (ms),95th Percentile Response Time (ms),95PCENT,AVERAGE,95Percent,PRIMARY,108000,BusinessTransactionPercentiles
-Business Transaction,Business Transaction Performance|Business Transactions|*|*|Individual Nodes|*|Average Response Time (ms),Average Response Time (ms),NODEART,AVERAGE,,SECONDARY,108000,TransactionPerNode
-Business Transaction,Business Transaction Performance|Business Transactions|*|*|Individual Nodes|*|Calls per Minute,Calls per Minute,NODECPM,SUM,,PRIMARY,0000FF,TransactionPerNode
-Business Transaction,Business Transaction Performance|Business Transactions|*|*|Individual Nodes|*|Errors per Minute,Errors per Minute,NODEEPM,SUM,,PRIMARY,FF0000,TransactionPerNode
+Tier,Business Transaction Performance|Business Transactions|*|*|Average Response Time (ms),Average Response Time (ms),ART,AVERAGE,CallsAndResponse,SECONDARY,108000,TransactionBT
+Tier,Business Transaction Performance|Business Transactions|*|*|Calls per Minute,Calls per Minute,CPM,SUM,CallsAndResponse,PRIMARY,0000FF,TransactionBT
+Tier,Business Transaction Performance|Business Transactions|*|*|Errors per Minute,Errors per Minute,EPM,SUM,CallsAndResponse,PRIMARY,FF0000,TransactionBT
+Tier,Business Transaction Performance|Business Transactions|*|*|95th Percentile Response Time (ms),95th Percentile Response Time (ms),95PCENT,AVERAGE,95Percent,PRIMARY,108000,BusinessTransactionPercentiles
+Node,Business Transaction Performance|Business Transactions|*|*|Individual Nodes|*|Average Response Time (ms),Average Response Time (ms),NODEART,AVERAGE,,SECONDARY,108000,TransactionPerNode
+Node,Business Transaction Performance|Business Transactions|*|*|Individual Nodes|*|Calls per Minute,Calls per Minute,NODECPM,SUM,,PRIMARY,0000FF,TransactionPerNode
+Node,Business Transaction Performance|Business Transactions|*|*|Individual Nodes|*|Errors per Minute,Errors per Minute,NODEEPM,SUM,,PRIMARY,FF0000,TransactionPerNode
 Business Transaction,Business Transaction Performance|Business Transactions|*|*|External Calls|*|Average Response Time (ms),Average Response Time (ms),BACKART,AVERAGE,,SECONDARY,108000,BackendCallsPerBT
 Business Transaction,Business Transaction Performance|Business Transactions|*|*|External Calls|*|Calls per Minute,Calls per Minute,BACKCPM,SUM,,PRIMARY,0000FF,BackendCallsPerBT
 Business Transaction,Business Transaction Performance|Business Transactions|*|*|External Calls|*|Errors per Minute,Errors per Minute,BACKEPM,SUM,,PRIMARY,FF0000,BackendCallsPerBT
 Business Transaction,Business Transaction Performance|Business Transactions|*|*|External Calls|Call-JDBC to Discovered backend call - APPDY-MySQL-DB-5.7.13-0ubuntu0.16.04.2|Calls per Minute,Call-JDBC to Discovered backend call - APPDY-MySQL-DB-5.7.13-0ubuntu0.16.04.2|Calls per Minute,BACKCPMSPEC,SUM,SpecSQLCPM,PRIMARY,0000FF,BackendCallsSpecificCustom1
-Business Transaction,Business Transaction Performance|Business Transactions|*|*|Individual Nodes|*|External Calls|*|Average Response Time (ms),Average Response Time (ms),NODEBACKART,AVERAGE,,SECONDARY,108000,BackendCallsPerBTPerNode
-Business Transaction,Business Transaction Performance|Business Transactions|*|*|Individual Nodes|*|External Calls|*|Calls per Minute,Calls per Minute,NODEBACKCPM,SUM,,PRIMARY,0000FF,BackendCallsPerBTPerNode
-Business Transaction,Business Transaction Performance|Business Transactions|*|*|Individual Nodes|*|External Calls|*|Errors per Minute,Errors per Minute,NODEBACKEPM,SUM,,PRIMARY,FF0000,BackendCallsPerBTPerNode
-Business Transaction,Business Transaction Performance|Business Transactions|*|*|Individual Nodes|ECommerce_WEB1_NODE|External Calls|Call-JDBC to Discovered backend call - APPDY-MySQL-DB-5.7.13-0ubuntu0.16.04.2|Calls per Minute ,ECommerce_WEB1_NODE|External Calls|Call-JDBC to Discovered backend call - APPDY-MySQL-DB-5.7.13-0ubuntu0.16.04.2|Calls per Minute ,NODEBACKCPMSPEC,SUM,SpecSQLSpecNodeCPM,PRIMARY,0000FF,BackendCallsSpecificCustom1
-Service Endpoint,Service Endpoints|*|*|Average Response Time (ms),Average Response Time (ms),ART,AVERAGE,CallsAndResponse,SECONDARY,108000,TransactionSEP
-Service Endpoint,Service Endpoints|*|*|Calls per Minute,Calls per Minute,CPM,SUM,CallsAndResponse,PRIMARY,0000FF,TransactionSEP
-Service Endpoint,Service Endpoints|*|*|Errors per Minute,Errors per Minute,EPM,SUM,CallsAndResponse,PRIMARY,FF0000,TransactionSEP
-Service Endpoint,Service Endpoints|*|*|Individual Nodes|*|Average Response Time (ms),Average Response Time (ms),NODEART,AVERAGE,,SECONDARY,108000,TransactionPerNode
-Service Endpoint,Service Endpoints|*|*|Individual Nodes|*|Calls per Minute,Calls per Minute,NODECPM,SUM,,PRIMARY,0000FF,TransactionPerNode
-Service Endpoint,Service Endpoints|*|*|Individual Nodes|*|Errors per Minute,Errors per Minute,NODEEPM,SUM,,PRIMARY,FF0000,TransactionPerNode
+Node,Business Transaction Performance|Business Transactions|*|*|Individual Nodes|*|External Calls|*|Average Response Time (ms),Average Response Time (ms),NODEBACKART,AVERAGE,,SECONDARY,108000,BackendCallsPerBTPerNode
+Node,Business Transaction Performance|Business Transactions|*|*|Individual Nodes|*|External Calls|*|Calls per Minute,Calls per Minute,NODEBACKCPM,SUM,,PRIMARY,0000FF,BackendCallsPerBTPerNode
+Node,Business Transaction Performance|Business Transactions|*|*|Individual Nodes|*|External Calls|*|Errors per Minute,Errors per Minute,NODEBACKEPM,SUM,,PRIMARY,FF0000,BackendCallsPerBTPerNode
+Node,Business Transaction Performance|Business Transactions|*|*|Individual Nodes|ECommerce_WEB1_NODE|External Calls|Call-JDBC to Discovered backend call - APPDY-MySQL-DB-5.7.13-0ubuntu0.16.04.2|Calls per Minute ,ECommerce_WEB1_NODE|External Calls|Call-JDBC to Discovered backend call - APPDY-MySQL-DB-5.7.13-0ubuntu0.16.04.2|Calls per Minute ,NODEBACKCPMSPEC,SUM,SpecSQLSpecNodeCPM,PRIMARY,0000FF,BackendCallsSpecificCustom1
+Tier,Service Endpoints|*|*|Average Response Time (ms),Average Response Time (ms),ART,AVERAGE,CallsAndResponse,SECONDARY,108000,TransactionSEP
+Tier,Service Endpoints|*|*|Calls per Minute,Calls per Minute,CPM,SUM,CallsAndResponse,PRIMARY,0000FF,TransactionSEP
+Tier,Service Endpoints|*|*|Errors per Minute,Errors per Minute,EPM,SUM,CallsAndResponse,PRIMARY,FF0000,TransactionSEP
+Node,Service Endpoints|*|*|Individual Nodes|*|Average Response Time (ms),Average Response Time (ms),NODEART,AVERAGE,,SECONDARY,108000,TransactionPerNode
+Node,Service Endpoints|*|*|Individual Nodes|*|Calls per Minute,Calls per Minute,NODECPM,SUM,,PRIMARY,0000FF,TransactionPerNode
+Node,Service Endpoints|*|*|Individual Nodes|*|Errors per Minute,Errors per Minute,NODEEPM,SUM,,PRIMARY,FF0000,TransactionPerNode
 Error,Errors|*|*|Errors per Minute,Errors per Minute,EPM,SUM,CallsAndResponse,PRIMARY,FF0000,TransactionError
 Error,Errors|*|*|Individual Nodes|*|Errors per Minute,Errors per Minute,NODEEPM,SUM,,PRIMARY,FF0000,TransactionPerNode
 Information Point,Information Points|*|Average Response Time (ms),Average Response Time (ms),ART,AVERAGE,CallsAndResponse,SECONDARY,108000,TransactionIP
