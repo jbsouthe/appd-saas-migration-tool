@@ -63,7 +63,7 @@ public class CSVMetricWriter {
                 }
                 Long targetMetricId = null;
                 try {
-                    targetMetricId = targetController.getEquivolentMetricId(targetApplicationId, metricDefinition.metricName);
+                    targetMetricId = targetController.getEquivolentMetricId(metricValue.getBlitzEntityTypeString(), targetApplicationId, metricDefinition.metricName);
                 } catch (BadDataException e) {
                     logger.warn("Skipping this metric, we received a no data found metric: %s",e.toString());
                     continue;

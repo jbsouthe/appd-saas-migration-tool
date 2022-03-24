@@ -41,13 +41,13 @@ public class TargetController extends Controller{
         return null;
     }
 
-    public Long getEquivolentMetricId(Long targetApplicationId, String databaseMetricName) throws BadDataException {
+    public Long getEquivolentMetricId(String blitzEntityTypeString, Long targetApplicationId, String databaseMetricName) throws BadDataException {
         Application application = getApplication(targetApplicationId);
-        String metricPath = getControllerMetricPathFromDatabaseMetricName( application, databaseMetricName );
+        String metricPath = getControllerMetricPathFromDatabaseMetricName( blitzEntityTypeString, application, databaseMetricName );
         logger.debug("Metric search: appid: %d db metric name '%s' controller metric path '%s'", targetApplicationId, databaseMetricName, metricPath);
         if( application != null ) {
             if( application.isControllerNull() ) application.setController(this);
-            MetricData metricData = application.getControllerMetricData(metricPath);
+            MetricData metricData = application.getControllerMetricData(blitzEntityTypeString, metricPath);
             if( metricData != null ) {
                 logger.debug("Metric Id on target controller: %s(%d)", metricData.metricName, metricData.metricId);
             } else {
@@ -59,7 +59,7 @@ public class TargetController extends Controller{
     }
 
 
-    public String getControllerMetricPathFromDatabaseMetricName(Application application, String databaseMetricName) {
+    public String getControllerMetricPathFromDatabaseMetricName(String blitzEntityTypeString, Application application, String databaseMetricName) {
         Long optionalBTId = Parser.parseBTFromMetricName(databaseMetricName);
         Long optionalComponentId = Parser.parseComponentFromMetricName(databaseMetricName);
         Long optionalServiceEndpointId = Parser.parseSEFromMetricName(databaseMetricName);
@@ -86,7 +86,7 @@ public class TargetController extends Controller{
         }catch (NullPointerException nullPointerException ) {
             logger.warn("Null Pointer Exception in attempts to map optional metric parts to target controller: %s, cause: %s",nullPointerException.toString(),nullPointerException.getCause().toString());
         }
-        MetricData metricData = application.getControllerMetricData(databaseMetricName);
+        MetricData metricData = application.getControllerMetricData(blitzEntityTypeString, databaseMetricName);
         if( metricData != null ) return metricData.metricPath;
         return databaseMetricName; //give up, good luck
     }

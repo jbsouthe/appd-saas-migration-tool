@@ -1,9 +1,9 @@
 EntityType,MetricPath,MetricName,FolderName,RangeRollupType,Graph,Axis,LineColor,MetricSet
-Application,Overall Application Performance|Average Response Time (ms),Average Response Time (ms),ART,AVERAGE,CallsAndResponse,SECONDARY,108000,TransactionApplication
-Application,Overall Application Performance|Calls per Minute,Calls per Minute,CPM,SUM,CallsAndResponse,PRIMARY,0000FF,TransactionApplication
-Application,Overall Application Performance|Errors per Minute,Errors per Minute,EPM,SUM,CallsAndResponse,PRIMARY,FF0000,TransactionApplication
-Application,Overall Application Performance|Exceptions per Minute,Exceptions per Minute,EXCPM,SUM,CallsAndResponse,PRIMARY,FFA500,TransactionApplication
-Application,Overall Application Performance|HTTP Error Codes per Minute,HTTP Error Codes per Minute,HTTPEPM,SUM,CallsAndResponse,PRIMARY,FFC0CB,TransactionApplication
+App,Overall Application Performance|Average Response Time (ms),Average Response Time (ms),ART,AVERAGE,CallsAndResponse,SECONDARY,108000,TransactionApplication
+App,Overall Application Performance|Calls per Minute,Calls per Minute,CPM,SUM,CallsAndResponse,PRIMARY,0000FF,TransactionApplication
+App,Overall Application Performance|Errors per Minute,Errors per Minute,EPM,SUM,CallsAndResponse,PRIMARY,FF0000,TransactionApplication
+App,Overall Application Performance|Exceptions per Minute,Exceptions per Minute,EXCPM,SUM,CallsAndResponse,PRIMARY,FFA500,TransactionApplication
+App,Overall Application Performance|HTTP Error Codes per Minute,HTTP Error Codes per Minute,HTTPEPM,SUM,CallsAndResponse,PRIMARY,FFC0CB,TransactionApplication
 Tier,Overall Application Performance|*|Average Response Time (ms),Average Response Time (ms),ART,AVERAGE,CallsAndResponse,SECONDARY,108000,TransactionTier
 Tier,Overall Application Performance|*|Calls per Minute,Calls per Minute,CPM,SUM,CallsAndResponse,PRIMARY,0000FF,TransactionTier
 Tier,Overall Application Performance|*|Errors per Minute,Errors per Minute,EPM,SUM,CallsAndResponse,PRIMARY,FF0000,TransactionTier
@@ -16,17 +16,15 @@ Tier,Overall Application Performance|*|External Calls|Call-JDBC to Discovered ba
 Tier,Application Infrastructure Performance|*|Agent|App|Availability,App|Availability,AVAILAGENT,SUM,AgentStatistics,PRIMARY,108000,AgentStats
 Tier,Application Infrastructure Performance|*|Agent|Machine|Availability,Machine|Availability,AVAILMACHINE,SUM,AgentStatistics,PRIMARY,0000FF,AgentStats
 Tier,Application Infrastructure Performance|*|Agent|Metric Upload|Metrics uploaded,Metrics uploaded,METRUPL,SUM,AgentStatistics,SECONDARY,FFA500,AgentStats
-Tier,Application Infrastructure Performance|*|Hardware Resources|CPU|%Busy,CPU|%Busy,CPUBUSY,AVERAGE,OSCPUMemory,PRIMARY,108000,OSHardware
-Tier,Application Infrastructure Performance|*|Hardware Resources|Memory|Used (MB),Memory|Used (MB),MEMUSEDMB,AVERAGE,OSCPUMemory,SECONDARY,0000FF,OSHardware
-Tier,Application Infrastructure Performance|*|Hardware Resources|Disks|KB written/sec,Disks|KB written/sec,DISKKBWRITE,AVERAGE,OSDisk,PRIMARY,108000,OSHardware
-Tier,Application Infrastructure Performance|*|Hardware Resources|Disks|KB read/sec,Disks|KB read/sec,DISKKBREAD,AVERAGE,OSDisk,PRIMARY,0000FF,OSHardware
-Tier,Application Infrastructure Performance|*|Hardware Resources|Network|Incoming KB/sec,Network|Incoming KB/sec,NETKBIN,AVERAGE,OSNetwork,PRIMARY,108000,OSHardware
-Tier,Application Infrastructure Performance|*|Hardware Resources|Network|Outgoing KB/sec,Network|Outgoing KB/sec,NETKBOUT,AVERAGE,OSNetwork,PRIMARY,0000FF,OSHardware
+Tier,Application Infrastructure Performance|*|Hardware Resources|CPU|*,CPU|%Busy,CPUBUSY,AVERAGE,OSCPUMemory,PRIMARY,108000,OSHardware
+Tier,Application Infrastructure Performance|*|Hardware Resources|Memory|*,Memory|Used (MB),MEMUSEDMB,AVERAGE,OSCPUMemory,SECONDARY,0000FF,OSHardware
+Tier,Application Infrastructure Performance|*|Hardware Resources|Disks|*,Disks|KB written/sec,DISKKBWRITE,AVERAGE,OSDisk,PRIMARY,108000,OSHardware
+Tier,Application Infrastructure Performance|*|Hardware Resources|Network|*,Network|Incoming KB/sec,NETKBIN,AVERAGE,OSNetwork,PRIMARY,108000,OSHardware
 Tier,Application Infrastructure Performance|*|CLR|Process CPU Burnt (%),CLR|Process CPU Burnt (%),CLRCPU,AVERAGE,CLRProcess,SECONDARY,108000,CLRStats
 Tier,Application Infrastructure Performance|*|CLR|Memory|Heap|Current Usage (bytes),Heap|Current Usage (bytes),CLRHEAPUSAGE,AVERAGE,CLRProcess,PRIMARY,0000FF,CLRStats
 Tier,Application Infrastructure Performance|*|CLR|Memory|Heap|Gen 0 Usage (bytes),Heap|Gen 0 Usage (bytes),CLRHEAPGEN0USAGE,AVERAGE,CLRProcess,PRIMARY,9ADAC8,CLRStats
 Tier,Application Infrastructure Performance|*|CLR|Memory|Heap|Gen 1 Usage (bytes),Heap|Gen 1 Usage (bytes),CLRHEAPGEN1USAGE,AVERAGE,CLRProcess,PRIMARY,3D3DFF,CLRStats
-Tier,Application Infrastructure Performance|*|CLR|Memory|Heap|Gen 2 Usage (bytes),Heap|Gen 2 Usage (bytes),CLRHEAPGEN2USAGE,AVERAGE,CLRProcess,PRIMARY,DA85FF,CLRStats
+Tier,Application Infrastructure Performance|*|CLR|Memory|Heap|*,Heap|Gen 2 Usage (bytes),CLRHEAPGEN2USAGE,AVERAGE,CLRProcess,PRIMARY,DA85FF,CLRStats
 Tier,Application Infrastructure Performance|*|CLR|Memory|Large Object Heap|Current Usage (bytes),Large Object Heap|Current Usage (bytes),CLRLOHEAPUSAGE,AVERAGE,CLRProcess,PRIMARY,FFB66B,CLRStats
 Tier,Application Infrastructure Performance|*|CLR|Garbage Collection|GC Time Spent (%),GC Time Spent (%),CLRGCPCENT,AVERAGE,CLRGC,PRIMARY,108000,CLRStats
 Tier,Application Infrastructure Performance|*|CLR|Garbage Collection|Number of Induced GCs,Number of Induced GCs,CLRGCINDUCED,SUM,CLRGC,SECONDARY,0000FF,CLRStats

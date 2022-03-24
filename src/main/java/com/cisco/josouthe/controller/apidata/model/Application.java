@@ -3,16 +3,14 @@ package com.cisco.josouthe.controller.apidata.model;
 import com.cisco.josouthe.controller.Controller;
 import com.cisco.josouthe.controller.apidata.metric.MetricData;
 import com.cisco.josouthe.controller.dbdata.DatabaseMetricDefinition;
-import com.cisco.josouthe.exceptions.BadDataException;
-import com.cisco.josouthe.util.TimeUtil;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import java.io.BufferedReader;
-import java.io.FileReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 
 public class Application implements Comparable<Application> {
     private static final Logger logger = LogManager.getFormatterLogger();
@@ -47,19 +45,20 @@ public class Application implements Comparable<Application> {
         return controllerMetricMap.keySet();
     }
 
-    public MetricData getControllerMetricData( String metricName ) {
+    public MetricData getControllerMetricData(String blitzEntityTypeString, String metricName) {
         init();
         if( metricName.contains("*") )
             logger.warn("Metric name contains a wildcard, this means it could return many metrics, but this method is only looking for the first metric in that set, we are not expecting this: %s", metricName);
         MetricData metricData = controllerMetricMap.get(metricName);
         if( metricData == null && getControllerMetricLookupCount(metricName) <= 3 ) {
-            for( MetricData metric : controller.getMetricValue(this.id, metricName, true) ) {
-                //if( metric.metricPath.equals(metricName) ) metricData = metric;
-                metricData=metric;
+            outerLoop: for( String metricPath : readMetricPathsForType(blitzEntityTypeString) ) {
+                for (MetricData metric : controller.getMetricValue(this.id, metricPath, true)) {
+                    if (metric.metricPath.equals(metricName)) {
+                        metricData = metric;
+                        break outerLoop;
+                    }
+                }
             }
-            /* if( "METRIC DATA NOT FOUND".equals(metricData.metricName) ) { //oh man, this isn't good
-                throw new BadDataException(String.format("Got a METRIC DATA NOT FOUND while trying to find a metric id, this may be a problem, metric returned: %s(%d)", metricData.metricName, metricData.metricId));
-            } */
             if( metricData != null ) {
                 controllerMetricMap.put(metricName, metricData);
                 logger.info("Metric %s returning metric id %d", metricName, metricData.metricId);
@@ -235,17 +234,34 @@ public class Application implements Comparable<Application> {
         return metricDataList;
     }
 
-    private List<String> readMetricPathsForType(String type) throws IOException {
-        List<String> metricPaths = new ArrayList<>();
-        BufferedReader reader = new BufferedReader( new InputStreamReader( getClass().getResourceAsStream("/MetricPaths.csv")));
-        String line = reader.readLine();
+    private static ConcurrentHashMap<String,List<String>> _readMetricPathsForTypeCache = null;
+    private static synchronized List<String> readMetricPathsForType(String type) {
+        if( _readMetricPathsForTypeCache == null ) _readMetricPathsForTypeCache = new ConcurrentHashMap<>();
+        List<String> metricPaths = _readMetricPathsForTypeCache.get(type);
+        if( metricPaths != null ) return metricPaths;
+
+        metricPaths = new ArrayList<>();
+        BufferedReader reader = new BufferedReader( new InputStreamReader( type.getClass().getResourceAsStream("/MetricPaths.csv")));
+        String line = null;
+        try {
+            line = reader.readLine();
+        } catch (IOException e) {
+            logger.error("Error reading metric path expressions, we need to stop and figure this out! Exception: %s",e);
+        }
         while( line!=null && !line.isEmpty() ) {
             String[] parts = line.split(",");
-            if( type.equals(parts[0])) {
+            if( type.equalsIgnoreCase(parts[0])) {
                 metricPaths.add(parts[1]);
             }
-            line = reader.readLine();
+            try {
+                line = reader.readLine();
+            } catch (IOException e) {
+                logger.error("Error reading metric path expressions, we need to stop and figure this out! Exception: %s",e);
+                line=null;
+            }
         }
+
+        _readMetricPathsForTypeCache.put(type,metricPaths);
         return metricPaths;
     }
 
