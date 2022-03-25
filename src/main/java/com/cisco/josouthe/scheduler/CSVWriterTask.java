@@ -32,22 +32,22 @@ public class CSVWriterTask implements Runnable{
      */
     @Override
     public void run() {
-        while( configuration.isRunning() ) {
+        boolean processedOne=false;
+        while( !processedOne ) {
             try {
-                MetricValueCollection metricValueCollection = dataQueue.poll(5000, TimeUnit.MILLISECONDS);
+                MetricValueCollection metricValueCollection = dataQueue.poll(5, TimeUnit.MINUTES);
                 if( metricValueCollection != null ) {
+                    processedOne=true;
                     logger.info("Poll returned %d data elements to write", metricValueCollection.getMetrics().size());
+                    long startTime = System.currentTimeMillis();
                     configuration.getCSVMetricWriter().writeMetricsToFile(metricValueCollection);
+                    long runTime = System.currentTimeMillis() - startTime;
+                    logger.info("CSV Writer wrote %d metrics in %d milliseconds", metricValueCollection.getMetrics().size(), runTime);
                 }
             } catch (InterruptedException ignored) {
                 //ignore it
             }
         }
-        logger.info("Shutting down database Insert Task");
-        try {
-            configuration.getCSVMetricWriter().close();
-        } catch (IOException e) {
-            logger.warn("Error closing csv output files: %s",e.toString());
-        }
+        logger.info("Shutting down CSV Writer Task");
     }
 }

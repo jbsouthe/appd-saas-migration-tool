@@ -7,47 +7,49 @@ import com.cisco.josouthe.util.TimeUtil;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
+import java.io.IOException;
 import java.util.Collection;
 import java.util.LinkedList;
 import java.util.concurrent.*;
 
 public class MainControlScheduler {
     private static final Logger logger = LogManager.getFormatterLogger();
-    Configuration configuration;
+    private Configuration configuration;
+    private LinkedBlockingQueue<MetricValueCollection> dataToConvertLinkedBlockingQueue;
     private LinkedBlockingQueue<MetricValueCollection> dataToInsertLinkedBlockingQueue;
     private ThreadPoolExecutor executorFetchData;
+    private ThreadPoolExecutor executorConvertData;
     private ThreadPoolExecutor executorInsertData;
-    Collection<Future<?>> futures = new LinkedList<Future<?>>();
+    private Collection<Future<?>> futures = new LinkedList<Future<?>>();
+    private static long incrementMS = 24*60*60*1000; //1 day
 
     public MainControlScheduler(Configuration config ) {
         this.configuration = config;
         dataToInsertLinkedBlockingQueue = new LinkedBlockingQueue<>();
+        dataToConvertLinkedBlockingQueue = new LinkedBlockingQueue<>();
         executorFetchData = (ThreadPoolExecutor) Executors.newFixedThreadPool( this.configuration.getProperty("scheduler-NumberOfDatabaseThreads", 15), new NamedThreadFactory("Database") );
-        executorInsertData = (ThreadPoolExecutor) Executors.newFixedThreadPool( this.configuration.getProperty("scheduler-NumberOfWriterThreads", 30), new NamedThreadFactory("CSVWriter") );
+        executorConvertData = (ThreadPoolExecutor) Executors.newFixedThreadPool( this.configuration.getProperty("scheduler-NumberOfConverterThreads", 30), new NamedThreadFactory("Converter") );
+        executorInsertData = (ThreadPoolExecutor) Executors.newFixedThreadPool( this.configuration.getProperty("scheduler-NumberOfWriterThreads", 5), new NamedThreadFactory("CSVWriter") );
     }
 
     public void run() {
         this.configuration.setRunning(true);
-        for( int i=0; i < this.configuration.getProperty("scheduler-NumberOfWriterThreads", 30); i++) {
-            executorInsertData.execute( new CSVWriterTask(configuration, dataToInsertLinkedBlockingQueue));
-        }
-        logger.info("Started %d CSV File Writer Tasks, all looking for work", executorInsertData.getPoolSize());
         for( ControllerDatabase controllerDatabase : configuration.getControllerList() ) {
             switch (configuration.getMigrationLevel()) { //1 = App, 2 = 1+Tiers+nodes, 3= 2+BT+ALL
                 case 3: { //TODO implement the deeper methods
                 }
                 case 2: {
                     long startTimestamp= TimeUtil.now();
-                    long endTimestamp = startTimestamp - (48*60*60*1000); //2 days at a time
+                    long endTimestamp = startTimestamp - incrementMS;
                     while( startTimestamp > TimeUtil.getDaysBackTimestamp(configuration.getDaysToRetrieveData()) ) {
-                        futures.add(executorFetchData.submit(new MetricDatabaseReaderTask("node", controllerDatabase, startTimestamp, endTimestamp, configuration, dataToInsertLinkedBlockingQueue)));
-                        futures.add(executorFetchData.submit(new MetricDatabaseReaderTask("tier", controllerDatabase, startTimestamp, endTimestamp, configuration, dataToInsertLinkedBlockingQueue)));
+                        futures.addAll( submitJob(new MetricDatabaseReaderTask("node", controllerDatabase, startTimestamp, endTimestamp, configuration, dataToConvertLinkedBlockingQueue)));
+                        futures.addAll( submitJob(new MetricDatabaseReaderTask("tier", controllerDatabase, startTimestamp, endTimestamp, configuration, dataToConvertLinkedBlockingQueue)));
                         startTimestamp = endTimestamp;
-                        endTimestamp -= (48*60*60*1000); //2 days at a time
+                        endTimestamp -= incrementMS;
                     }
                 }
                 case 1: {
-                    futures.add(executorFetchData.submit(new MetricDatabaseReaderTask( "app", controllerDatabase, configuration, dataToInsertLinkedBlockingQueue)));
+                    futures.addAll( submitJob(new MetricDatabaseReaderTask( "app", controllerDatabase, configuration, dataToConvertLinkedBlockingQueue)));
                 }
 
             }
@@ -62,58 +64,40 @@ public class MainControlScheduler {
                 e.printStackTrace();
             }
         }
-        logger.info("All Data Fetch jobs scheduled have completed, now waiting for the CSV Writers to finish processing");
-        while(!dataToInsertLinkedBlockingQueue.isEmpty()) {
-            sleep(5000);
-        }
-        logger.info("Everything is written, shutting everything down");
+        logger.info("All Data Fetch jobs scheduled have completed, now waiting for the Workers to finish processing");
         configuration.setRunning(false);
-        sleep(10000); //so database workers can finish up
-        executorInsertData.shutdown();
         executorFetchData.shutdown();
-        /*
-        while(configuration.isRunning() ) {
-            for( Controller controller : configuration.getControllerList() ) {
-                for(Application application : controller.applications ) {
-                    logger.info("Running collector for %s@%s", application.getName(), controller.hostname);
-                    executorFetchData.execute(new ApplicationMetricTask( application, dataToInsertLinkedBlockingQueue));
-                    executorFetchData.execute( new ApplicationEventTask( application, dataToInsertLinkedBlockingQueue));
-                }
+        try {
+            while (!executorFetchData.awaitTermination(300, TimeUnit.SECONDS)) {
+                logger.info("Still waiting for Database Reader Tasks to finish");
             }
-
-            for(Analytics analytic : configuration.getAnalyticsList() ) {
-                executorFetchData.execute( new AnalyticsSearchTask( analytic, dataToInsertLinkedBlockingQueue) );
+        } catch (InterruptedException ignored) {}
+        executorConvertData.shutdown();
+        try {
+            while (!executorConvertData.awaitTermination(300, TimeUnit.SECONDS)) {
+                logger.info("Still waiting for Data Conversion Tasks to finish");
             }
-            if( configuration.getProperty("scheduler-enabled", true) ) {
-                logger.info("MainControlScheduler is enabled, so sleeping for %d minutes and running again", configuration.getProperty("scheduler-pollIntervalMinutes", 60L));
-                sleep( configuration.getProperty("scheduler-pollIntervalMinutes", 60L) * 60000 );
-                logger.info("MainControlScheduler is awakened and running once more");
-            } else {
-                sleep(5000);
-                for( Controller controller : configuration.getControllerList() ) {
-                   logger.debug("Waiting for Controller %s to finish initializing all %d applications",controller.hostname, controller.applications.length);
-                   for (Application application : controller.applications) {
-                        logger.debug("Waiting for Application %s to finish initializing",application.getName());
-                        while( ! application.isFinishedInitialization() ) sleep(10000 );
-                        logger.debug("Application %s finished initializing",application.getName());
-                   }
-                   logger.debug("Controller %s finished initializing",controller.hostname);
-                }
-                executorConfigRefresh.shutdownNow();
-                sleep(5000);
-                logger.info("MainControlScheduler is disabled, so exiting when database queue is drained");
-                while(!dataToInsertLinkedBlockingQueue.isEmpty()) {
-                    sleep(5000);
-                }
-                configuration.setRunning(false);
-                sleep(10000); //so database workers can finish up
-                executorInsertData.shutdown();
-                executorFetchData.shutdown();
+        } catch (InterruptedException ignored) {}
+        executorInsertData.shutdown();
+        try {
+            while (!executorInsertData.awaitTermination(300, TimeUnit.SECONDS)) {
+                logger.info("Still waiting for CSV Writer Tasks to finish");
             }
+        } catch (InterruptedException ignored) {}
+        logger.info("Everything is written, shutting everything down");
+        try {
+            configuration.getCSVMetricWriter().close();
+        } catch (IOException e) {
+            logger.warn("Error closing csv output files: %s",e.toString());
         }
+    }
 
-         */
-
+    private Collection<? extends Future<?>> submitJob(MetricDatabaseReaderTask metricDatabaseReaderTask) {
+        Collection<Future<?>> futures = new LinkedList<>();
+        futures.add(executorFetchData.submit(metricDatabaseReaderTask));
+        futures.add(executorConvertData.submit(new DataConverterTask(configuration, dataToConvertLinkedBlockingQueue, dataToInsertLinkedBlockingQueue)));
+        futures.add(executorInsertData.submit(new CSVWriterTask(configuration,dataToInsertLinkedBlockingQueue)));
+        return futures;
     }
 
     private void sleep( long forMilliseconds ) {

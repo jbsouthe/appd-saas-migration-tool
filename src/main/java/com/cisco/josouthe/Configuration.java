@@ -63,6 +63,7 @@ public class Configuration {
         digester.addCallMethod("Migration/DaysToRetrieve", "setDaysToRetrieve", 0);
         digester.addCallMethod("Migration/OutputDir", "setOutputDir", 0);
         digester.addCallMethod("Migration/NumberOfDatabaseThreads", "setNumberOfDatabaseThreads", 0);
+        digester.addCallMethod("Migration/NumberOfConverterThreads", "setNumberOfConverterThreads", 0);
         digester.addCallMethod("Migration/NumberOfWriterThreads", "setNumberOfWriterThreads", 0);
 
         //Target controller section, this is where we plan to create insertable data for
@@ -104,6 +105,10 @@ public class Configuration {
 
     public void setNumberOfWriterThreads( String numberOfThreads ) throws InvalidConfigurationException {
         this.properties.setProperty("scheduler-NumberOfWriterThreads", numberOfThreads);
+    }
+
+    public void setNumberOfConverterThreads( String numberOfThreads ) throws InvalidConfigurationException {
+        this.properties.setProperty("scheduler-NumberOfConverterThreads", numberOfThreads);
     }
 
     public void setOutputDir( String outputDir ) throws InvalidConfigurationException {

@@ -7,12 +7,11 @@ import java.sql.SQLException;
 
 public class DatabaseMetricValue {
     //Level 1: metricdata_hour_agg_app
-    public Long ts_min, metric_id, application_id;
+    public Long ts_min, metric_id, application_id, account_id;
     public String group_count_val, count_val, sum_val, min_val, max_val, cur_val, weight_value_square, weight_value, rollup_type, cluster_rollup_type;
     //Level 2: metricdata_hour_agg
-    public Long application_component_instance_id;
+    public Long application_component_instance_id, node_id;
     //Level 3: metricdata_hour
-    public Long node_id;
     private String type;
 
     public DatabaseMetricValue(String type, ResultSet resultSet) throws SQLException, BadDataException {
@@ -41,6 +40,8 @@ public class DatabaseMetricValue {
                 throw new BadDataException(String.format("This metric type '%s' is not yet supported", type));
         }
     }
+
+
 
     public String getBlitzEntityTypeString() { //com.appdynamics.blitz.shared.op.dto.common.BlitzEntityType
         return type;

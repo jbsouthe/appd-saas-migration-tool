@@ -4,6 +4,7 @@ import com.cisco.josouthe.Configuration;
 import com.cisco.josouthe.controller.apidata.account.MyAccount;
 import com.cisco.josouthe.controller.apidata.metric.MetricData;
 import com.cisco.josouthe.controller.apidata.model.*;
+import com.cisco.josouthe.controller.dbdata.DatabaseMetricDefinition;
 import com.cisco.josouthe.exceptions.BadDataException;
 import com.cisco.josouthe.exceptions.ControllerBadStatusException;
 import com.cisco.josouthe.exceptions.InvalidConfigurationException;
@@ -41,13 +42,13 @@ public class TargetController extends Controller{
         return null;
     }
 
-    public Long getEquivolentMetricId(String blitzEntityTypeString, Long targetApplicationId, String databaseMetricName) throws BadDataException {
+    public Long getEquivolentMetricId(String blitzEntityTypeString, Long targetApplicationId, DatabaseMetricDefinition databaseMetricDefinition) throws BadDataException {
         Application application = getApplication(targetApplicationId);
-        String metricPath = getControllerMetricPathFromDatabaseMetricName( blitzEntityTypeString, application, databaseMetricName );
-        logger.debug("Metric search: appid: %d db metric name '%s' controller metric path '%s'", targetApplicationId, databaseMetricName, metricPath);
+        String metricPath = getControllerMetricPathFromDatabaseMetricName( blitzEntityTypeString, application, databaseMetricDefinition );
+        logger.debug("Metric search: appid: %d db metric name '%s' controller metric path '%s'", targetApplicationId, databaseMetricDefinition.metricName, metricPath);
         if( application != null ) {
             if( application.isControllerNull() ) application.setController(this);
-            MetricData metricData = application.getControllerMetricData(blitzEntityTypeString, metricPath);
+            MetricData metricData = application.getControllerMetricData(blitzEntityTypeString, metricPath, databaseMetricDefinition);
             if( metricData != null ) {
                 logger.debug("Metric Id on target controller: %s(%d)", metricData.metricName, metricData.metricId);
             } else {
@@ -59,7 +60,8 @@ public class TargetController extends Controller{
     }
 
 
-    public String getControllerMetricPathFromDatabaseMetricName(String blitzEntityTypeString, Application application, String databaseMetricName) {
+    public String getControllerMetricPathFromDatabaseMetricName(String blitzEntityTypeString, Application application, DatabaseMetricDefinition databaseMetricDefinition) {
+        String databaseMetricName = databaseMetricDefinition.metricName;
         Long optionalBTId = Parser.parseBTFromMetricName(databaseMetricName);
         Long optionalComponentId = Parser.parseComponentFromMetricName(databaseMetricName);
         Long optionalServiceEndpointId = Parser.parseSEFromMetricName(databaseMetricName);
@@ -86,7 +88,7 @@ public class TargetController extends Controller{
         }catch (NullPointerException nullPointerException ) {
             logger.warn("Null Pointer Exception in attempts to map optional metric parts to target controller: %s, cause: %s",nullPointerException.toString(),nullPointerException.getCause().toString());
         }
-        MetricData metricData = application.getControllerMetricData(blitzEntityTypeString, databaseMetricName);
+        MetricData metricData = application.getControllerMetricData(blitzEntityTypeString, databaseMetricName, databaseMetricDefinition);
         if( metricData != null ) return metricData.metricPath;
         return databaseMetricName; //give up, good luck
     }
@@ -97,6 +99,7 @@ public class TargetController extends Controller{
             Tier tier = application.getTier(applicationTierName);
             if( tier != null ) return tier.id;
         }
+        logger.warn("Unable to find target tier id for appId: %d and tier: %s",targetApplicationId, applicationTierName);
         return null;
     }
 
@@ -106,6 +109,7 @@ public class TargetController extends Controller{
             Node node = application.getNode(applicationTierNodeName);
             if( node != null ) return node.id;
         }
+        logger.warn("Unable to find target node id for appId: %d and node: %s",targetApplicationId, applicationTierNodeName);
         return null;
     }
 

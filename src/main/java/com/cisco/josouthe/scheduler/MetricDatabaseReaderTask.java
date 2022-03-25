@@ -47,12 +47,14 @@ public class MetricDatabaseReaderTask implements Runnable {
     public void run() {
         try {
             MetricValueCollection metricValueCollection = null;
+            long startTime = System.currentTimeMillis();
             if( startTimestamp == null ) {
                 metricValueCollection = controllerDatabase.getAllMetrics(dataType, configuration.getMigrationLevel(), configuration.getDaysToRetrieveData());
             } else {
                 metricValueCollection = controllerDatabase.getAllMetrics(dataType, configuration.getMigrationLevel(), startTimestamp, endTimestamp);
             }
-            logger.info("Fetched %d %s metrics from %s database for processing", metricValueCollection.getMetrics().size(), dataType, controllerDatabase.toString());
+            long runTime = System.currentTimeMillis() - startTime;
+            logger.info("Fetched %d %s metrics from %s database for processing in %d milliseconds", metricValueCollection.getMetrics().size(), dataType, controllerDatabase.toString(), runTime);
             dataToInsertLinkedBlockingQueue.add( metricValueCollection );
         } catch (InvalidConfigurationException e) {
             logger.warn("Could not get metrics for controller %s, because: %s", controllerDatabase.toString(), e.toString());

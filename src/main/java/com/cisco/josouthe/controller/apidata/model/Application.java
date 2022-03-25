@@ -45,15 +45,20 @@ public class Application implements Comparable<Application> {
         return controllerMetricMap.keySet();
     }
 
-    public MetricData getControllerMetricData(String blitzEntityTypeString, String metricName) {
+    public MetricData getControllerMetricData(String blitzEntityTypeString, String metricName, DatabaseMetricDefinition databaseMetricDefinition) {
         init();
         if( metricName.contains("*") )
             logger.warn("Metric name contains a wildcard, this means it could return many metrics, but this method is only looking for the first metric in that set, we are not expecting this: %s", metricName);
         MetricData metricData = controllerMetricMap.get(metricName);
         if( metricData == null && getControllerMetricLookupCount(metricName) <= 3 ) {
             outerLoop: for( String metricPath : readMetricPathsForType(blitzEntityTypeString) ) {
-                for (MetricData metric : controller.getMetricValue(this.id, metricPath, true)) {
-                    if (metric.metricPath.equals(metricName)) {
+                innerLoop: for (MetricData metric : controller.getMetricValue(this.id, metricPath, true)) {
+                    if (metric.metricName.equals(metricName)) {
+                        switch (blitzEntityTypeString) {
+                            case "node": { if( !metric.metricPath.contains(databaseMetricDefinition.nodeName) ) continue innerLoop; }
+                            case "tier": { if( !metric.metricPath.contains(databaseMetricDefinition.tierName) ) continue innerLoop; }
+                            case "app": { /*keeping this for completeness, but their is no app specific test */ }
+                        }
                         metricData = metric;
                         break outerLoop;
                     }
@@ -64,6 +69,7 @@ public class Application implements Comparable<Application> {
                 logger.info("Metric %s returning metric id %d", metricName, metricData.metricId);
             } else {
                 controllerMetricLookupCountMap.put(metricName, getControllerMetricLookupCount(metricName)+1);
+                logger.warn("Metric not found after deep search of controller, type: %s name: %s metric definition: %s", blitzEntityTypeString, metricName, databaseMetricDefinition);
             }
         }
         return metricData;

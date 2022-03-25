@@ -49,25 +49,8 @@ public class CSVMetricWriter {
 
         try {
             open();
-            long targetAccountId = this.targetController.getAccountId();
-            SourceModel sourceModel = metricValueCollection.getSourceModel();
             long counter=0;
             for (DatabaseMetricValue metricValue : metricValueCollection.getMetrics()) {
-                DatabaseMetricDefinition metricDefinition = metricValueCollection.getMetricDefinition(metricValue);
-                if( metricDefinition == null ) continue;
-                String applicationName = sourceModel.getApplicationName(metricValue.application_id);
-                Long targetApplicationId = targetController.getEquivolentApplicationId(applicationName);
-                if( targetApplicationId == null ) {
-                    logger.warn("We can not process this data, the application doesn't exist on the target controller!");
-                    continue;
-                }
-                Long targetMetricId = null;
-                try {
-                    targetMetricId = targetController.getEquivolentMetricId(metricValue.getBlitzEntityTypeString(), targetApplicationId, metricDefinition.metricName);
-                } catch (BadDataException e) {
-                    logger.warn("Skipping this metric, we received a no data found metric: %s",e.toString());
-                    continue;
-                }
                 switch (metricValue.getBlitzEntityTypeString()) { //this is found in the com.appdynamics.blitz.shared.hbase.dto.MetricValueLineFromCSV class
                     /*
                     try (Statement st = conn.createStatement()) {
@@ -102,7 +85,7 @@ public class CSVMetricWriter {
                      */
                         case "app": {
                             writeCSVValue(aPrinter, metricValue.ts_min*60000);
-                            writeCSVValue(aPrinter, targetMetricId);
+                            writeCSVValue(aPrinter, metricValue.metric_id);
                             writeCSVValue(aPrinter, metricValue.rollup_type);
                             writeCSVValue(aPrinter, metricValue.cluster_rollup_type);
                             writeCSVValue(aPrinter, metricValue.count_val);
@@ -112,16 +95,14 @@ public class CSVMetricWriter {
                             writeCSVValue(aPrinter, metricValue.cur_val);
                             writeCSVValue(aPrinter, metricValue.weight_value_square);
                             writeCSVValue(aPrinter, metricValue.weight_value);
-                            writeCSVValue(aPrinter, targetAccountId);
+                            writeCSVValue(aPrinter, metricValue.account_id);
                             writeCSVValue(aPrinter, metricValue.group_count_val);
-                            writeCSVValue(aPrinter, targetApplicationId, true);
+                            writeCSVValue(aPrinter, metricValue.application_id, true);
                             break;
                         }
                         case "tier": {
-                            Long targetTierId = targetController.getEquivolentTierId(targetApplicationId, sourceModel.getApplicationTierName(metricValue.application_id, metricValue.application_component_instance_id));
-                            if( targetTierId == null ) continue;
                             writeCSVValue(acnPrinter, metricValue.ts_min*60000);
-                            writeCSVValue(acnPrinter, targetMetricId);
+                            writeCSVValue(acnPrinter, metricValue.metric_id);
                             writeCSVValue(acnPrinter, metricValue.rollup_type);
                             writeCSVValue(acnPrinter, metricValue.cluster_rollup_type);
                             writeCSVValue(acnPrinter, metricValue.count_val);
@@ -131,18 +112,15 @@ public class CSVMetricWriter {
                             writeCSVValue(acnPrinter, metricValue.cur_val);
                             writeCSVValue(acnPrinter, metricValue.weight_value_square);
                             writeCSVValue(acnPrinter, metricValue.weight_value);
-                            writeCSVValue(acnPrinter, targetAccountId);
+                            writeCSVValue(acnPrinter, metricValue.account_id);
                             writeCSVValue(acnPrinter, metricValue.group_count_val);
-                            writeCSVValue(acnPrinter, targetApplicationId);
-                            writeCSVValue(acnPrinter, targetTierId, true);
+                            writeCSVValue(acnPrinter, metricValue.application_id);
+                            writeCSVValue(acnPrinter, metricValue.application_component_instance_id, true);
                             break;
                         }
                         case "node": {
-                            Long targetTierId = targetController.getEquivolentTierId(targetApplicationId, sourceModel.getApplicationTierName(metricValue.application_id, metricValue.application_component_instance_id));
-                            Long targetNodeId = targetController.getEquivolentNodeId(targetApplicationId, sourceModel.getApplicationTierNodeName(metricValue.application_id, metricValue.node_id));
-                            if( targetTierId == null || targetNodeId == null ) continue;
                             writeCSVValue(anPrinter, metricValue.ts_min*60000);
-                            writeCSVValue(anPrinter, targetMetricId);
+                            writeCSVValue(anPrinter, metricValue.metric_id);
                             writeCSVValue(anPrinter, metricValue.rollup_type);
                             writeCSVValue(anPrinter, metricValue.cluster_rollup_type);
                             writeCSVValue(anPrinter, metricValue.count_val);
@@ -152,11 +130,11 @@ public class CSVMetricWriter {
                             writeCSVValue(anPrinter, metricValue.cur_val);
                             writeCSVValue(anPrinter, metricValue.weight_value_square);
                             writeCSVValue(anPrinter, metricValue.weight_value);
-                            writeCSVValue(anPrinter, targetAccountId);
+                            writeCSVValue(anPrinter, metricValue.account_id);
                             writeCSVValue(anPrinter, 1);
-                            writeCSVValue(anPrinter, targetApplicationId);
-                            writeCSVValue(anPrinter, targetTierId);
-                            writeCSVValue(anPrinter, targetNodeId, true);
+                            writeCSVValue(anPrinter, metricValue.application_id);
+                            writeCSVValue(anPrinter, metricValue.application_component_instance_id);
+                            writeCSVValue(anPrinter, metricValue.node_id, true);
                             break;
                         }
                     }
