@@ -10,7 +10,8 @@ this assumes the ./lib directory contains the jar files found in the package
         <MigrationLevel>1</MigrationLevel> <!--only use 1 for now;  1, 2, or 3 KISS 1=Application level, 2= 1+Tier+BT, 3= 2+Node+Backends+anything else we can find -->
         <DaysToRetrieve>90</DaysToRetrieve> <!-- 90 days is enough for a weekly baseline -->
         <NumberOfDatabaseThreads>15</NumberOfDatabaseThreads>
-        <NumberOfWriterThreads>30</NumberOfWriterThreads>
+        <NumberOfConverterThreads>30</NumberOfConverterThreads>
+        <NumberOfWriterThreads>5</NumberOfWriterThreads>
         <OutputDir>./test-data</OutputDir> <!-- this will be created if it does not exist -->
         <TargetController>
             <URL>https://southerland-test.saas.appdynamics.com</URL>
