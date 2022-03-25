@@ -102,7 +102,7 @@ public class DataConverterTask implements Runnable {
                     MetricValueCollection outputMetricCollection = new MetricValueCollection(sourceModel, convertedMetrics);
                     outputQueue.add(outputMetricCollection);
                     long runTime= System.currentTimeMillis() - startTime;
-                    logger.info("Data conversion task processed %d metrics and produced %d metrics in %d milliseconds", metricValueCollection.getMetrics().size(), outputMetricCollection.getMetrics().size());
+                    logger.info("Data conversion task processed %d metrics and produced %d metrics in %d milliseconds", metricValueCollection.getMetrics().size(), outputMetricCollection.getMetrics().size(), runTime);
                 }
             } catch (InterruptedException e) {
                 //ignore
