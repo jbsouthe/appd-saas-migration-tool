@@ -24,4 +24,7 @@ public class MetricData {
         public double standardDeviation;
     }
 
+    public String toString() {
+        return String.format("metric: %s(%d) path: %s metrics: %d",metricName, metricId, metricPath, (metricValues==null ? 0 : metricValues.size()) );
+    }
 }

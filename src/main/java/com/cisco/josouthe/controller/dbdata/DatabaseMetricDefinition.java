@@ -3,7 +3,7 @@ package com.cisco.josouthe.controller.dbdata;
 import com.cisco.josouthe.util.Parser;
 
 public class DatabaseMetricDefinition {
-    public long metricId, appId, tierId, btId;
+    public long metricId, appId, tierId, btId, seId;
     public String metricName, applicationName, timeRollupType, clusterRollupType;
     public String tierName, nodeName, btName, seName;
 

@@ -175,7 +175,7 @@ public class Controller {
         boolean succeeded = false;
         while (! succeeded && tries < 3 ) {
             try {
-                metrics = getMetricValue(String.format("%scontroller/rest/applications/%d/metric-data?metric-path=%s&time-range-type=BEFORE_NOW&duration-in-mins=60&output=JSON&rollup=%s",
+                metrics = getMetricValue(String.format("%scontroller/rest/applications/%d/metric-data?metric-path=%s&time-range-type=BEFORE_NOW&duration-in-mins=11520&output=JSON&rollup=%s",
                         this.url, applicationId, Parser.encode(metricPath), rollup)
                 );
                 succeeded=true;
@@ -289,7 +289,7 @@ public class Controller {
         return json;
     }
 
-    protected String getRequest( String formatOrURI, Object... args ) throws ControllerBadStatusException {
+    public String getRequest( String formatOrURI, Object... args ) throws ControllerBadStatusException {
         if( args == null || args.length == 0 ) return getRequest(formatOrURI);
         return getRequest( String.format(formatOrURI,args));
     }
@@ -349,25 +349,14 @@ public class Controller {
 
     public Model getModel() {
         if( this.controllerModel == null ) {
+            logger.info("Initializing Model for Controller: %s",url);
             try {
                 String json = getRequest("controller/restui/applicationManagerUiBean/getApplicationsAllTypes");
                 logger.trace("getApplicationsAllTypes returned: %s",json);
                 this.controllerModel = new Model(gson.fromJson(json, ApplicationListing.class));
                 for (Application application : this.controllerModel.getAPMApplications()) {
+                    logger.info("Creating Model for Application: %s",application.name);
                     application.setController(this);
-                    json = getRequest("controller/rest/applications/%d/tiers?output=JSON", application.id);
-                    for( Tier tier : gson.fromJson(json, Tier[].class) )
-                        application.tiers.add(tier);
-                    json = getRequest("controller/rest/applications/%d/nodes?output=JSON", application.id);
-                    for( Node node : gson.fromJson(json, Node[].class))
-                        application.nodes.add(node);
-                    json = getRequest("controller/rest/applications/%d/business-transactions?output=JSON", application.id);
-                    for( BusinessTransaction businessTransaction : gson.fromJson(json, BusinessTransaction[].class))
-                        application.businessTransactions.add(businessTransaction);
-                    json = getRequest("controller/rest/applications/%d/backends?output=JSON", application.id);
-                    for( Backend backend : gson.fromJson(json, Backend[].class))
-                        application.backends.add(backend);
-                    application.serviceEndpoints.addAll( getServiceEndpoints(application.id));
                 }
             } catch (ControllerBadStatusException controllerBadStatusException) {
                 logger.warn("Giving up on getting controller model, not even going to retry");

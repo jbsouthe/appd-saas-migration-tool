@@ -44,23 +44,23 @@ public class TargetController extends Controller{
 
     public Long getEquivolentMetricId(String blitzEntityTypeString, Long targetApplicationId, DatabaseMetricDefinition databaseMetricDefinition) throws BadDataException {
         Application application = getApplication(targetApplicationId);
-        String metricPath = getControllerMetricPathFromDatabaseMetricName( blitzEntityTypeString, application, databaseMetricDefinition );
-        logger.debug("Metric search: appid: %d db metric name '%s' controller metric path '%s'", targetApplicationId, databaseMetricDefinition.metricName, metricPath);
+        String metricNameOnController = convertMetricNameFromDatabaseToController( blitzEntityTypeString, application, databaseMetricDefinition );
+        logger.debug("Metric search: appid: %d db metric name '%s' controller metric path '%s'", targetApplicationId, databaseMetricDefinition.metricName, metricNameOnController);
         if( application != null ) {
             if( application.isControllerNull() ) application.setController(this);
-            MetricData metricData = application.getControllerMetricData(blitzEntityTypeString, metricPath, databaseMetricDefinition);
-            if( metricData != null ) {
-                logger.debug("Metric Id on target controller: %s(%d)", metricData.metricName, metricData.metricId);
+            MetricMatcher metricMatcher = application.getControllerMetricMatch(blitzEntityTypeString, metricNameOnController, databaseMetricDefinition);
+            if( metricMatcher != null ) {
+                logger.debug("Metric Id on target controller: %s(%d)", metricMatcher.metricName, metricMatcher.id);
             } else {
-                throw new BadDataException(String.format("Metric Data is null for metric path: %s", metricPath));
+                throw new BadDataException(String.format("Metric Data is null for metric path: %s", metricMatcher));
             }
-            if( metricData != null ) return metricData.metricId;
+            if( metricMatcher != null ) return metricMatcher.id;
         }
         return null;
     }
 
 
-    public String getControllerMetricPathFromDatabaseMetricName(String blitzEntityTypeString, Application application, DatabaseMetricDefinition databaseMetricDefinition) {
+    public String convertMetricNameFromDatabaseToController(String blitzEntityTypeString, Application application, DatabaseMetricDefinition databaseMetricDefinition) {
         String databaseMetricName = databaseMetricDefinition.metricName;
         Long optionalBTId = Parser.parseBTFromMetricName(databaseMetricName);
         Long optionalComponentId = Parser.parseComponentFromMetricName(databaseMetricName);
@@ -88,8 +88,6 @@ public class TargetController extends Controller{
         }catch (NullPointerException nullPointerException ) {
             logger.warn("Null Pointer Exception in attempts to map optional metric parts to target controller: %s, cause: %s",nullPointerException.toString(),nullPointerException.getCause().toString());
         }
-        MetricData metricData = application.getControllerMetricData(blitzEntityTypeString, databaseMetricName, databaseMetricDefinition);
-        if( metricData != null ) return metricData.metricPath;
         return databaseMetricName; //give up, good luck
     }
 

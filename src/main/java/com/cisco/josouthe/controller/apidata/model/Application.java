@@ -3,6 +3,9 @@ package com.cisco.josouthe.controller.apidata.model;
 import com.cisco.josouthe.controller.Controller;
 import com.cisco.josouthe.controller.apidata.metric.MetricData;
 import com.cisco.josouthe.controller.dbdata.DatabaseMetricDefinition;
+import com.cisco.josouthe.exceptions.ControllerBadStatusException;
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -37,7 +40,6 @@ public class Application implements Comparable<Application> {
 
     public void setController( Controller controller ) {
         this.controller=controller;
-        init();
     }
 
     public Set<String> getMetricNames() {
@@ -47,8 +49,6 @@ public class Application implements Comparable<Application> {
 
     public MetricData getControllerMetricData(String blitzEntityTypeString, String metricName, DatabaseMetricDefinition databaseMetricDefinition) {
         init();
-        if( metricName.contains("*") )
-            logger.warn("Metric name contains a wildcard, this means it could return many metrics, but this method is only looking for the first metric in that set, we are not expecting this: %s", metricName);
         MetricData metricData = controllerMetricMap.get(metricName);
         if( metricData == null && getControllerMetricLookupCount(metricName) <= 3 ) {
             outerLoop: for( String metricPath : readMetricPathsForType(blitzEntityTypeString) ) {
@@ -81,66 +81,77 @@ public class Application implements Comparable<Application> {
 
 
     public Tier getTier( String name ) {
+        init();
         for( Tier tier : tiers )
             if( tier.name.equals(name) ) return tier;
         return null;
     }
 
     public Tier getTier( Tier o ) {
+        init();
         for( Tier tier : tiers )
             if( tier.equals(o) ) return tier;
         return null;
     }
 
     public Tier getTier( long id ) {
+        init();
         for( Tier tier : tiers )
             if( tier.id == id ) return tier;
         return null;
     }
 
     public Node getNode( String name ) {
+        init();
         for( Node node : nodes )
             if( node.name.equals(name) ) return node;
         return null;
     }
 
     public Node getNode( Node o ) {
+        init();
         for( Node node : nodes )
             if( node.equals(o) ) return node;
         return null;
     }
 
     public Node getNode( long id ) {
+        init();
         for( Node node : nodes )
             if( node.id == id ) return node;
         return null;
     }
 
     public BusinessTransaction getBusinessTransaction( String name ) {
+        init();
         for( BusinessTransaction businessTransaction : businessTransactions )
             if( businessTransaction.name.equals(name) ) return businessTransaction;
         return null;
     }
 
     public BusinessTransaction getBusinessTransaction( BusinessTransaction o ) {
+        init();
         for( BusinessTransaction businessTransaction : businessTransactions )
             if( businessTransaction.equals(o) ) return businessTransaction;
         return null;
     }
 
     public BusinessTransaction getBusinessTransaction(Long btId) {
+        init();
         for( BusinessTransaction businessTransaction : businessTransactions )
             if( businessTransaction.id == btId ) return businessTransaction;
         return null;
     }
 
     public Backend getBackend( String name ) {
+        init();
         for( Backend backend : backends )
             if( backend.name.equals(name) ) return backend;
         return null;
     }
 
     public Backend getBackend( Backend o ) {
+        init();
         for( Backend backend : backends )
             if( backend.equals(o) ) return backend;
         return null;
@@ -159,7 +170,60 @@ public class Application implements Comparable<Application> {
 
     public boolean isFinishedInitialization() { return finishedInitialization; }
     public void init() {
+        if( isControllerNull() ) return;
         if( !isFinishedInitialization() ) {
+            Gson gson = new GsonBuilder().setPrettyPrinting().create();
+            String json = null;
+            try {
+                json = controller.getRequest("controller/rest/applications/%d/tiers?output=JSON", id);
+                Tier[] tiersList = gson.fromJson(json, Tier[].class);
+                if (tiersList != null) {
+                    for (Tier tier : tiersList)
+                        tiers.add(tier);
+                    logger.info("Added %d Tiers to Application: %s", tiersList.length, name);
+                }
+            } catch (ControllerBadStatusException controllerBadStatusException ) {
+                logger.error("Error initializing Application %s, message: %s", name, controllerBadStatusException.getMessage());
+            }
+            try {
+                json = controller.getRequest("controller/rest/applications/%d/nodes?output=JSON", id);
+                Node[] nodesList = gson.fromJson(json, Node[].class);
+                if( nodesList != null ) {
+                    for (Node node : nodesList)
+                        nodes.add(node);
+                    logger.info("Added %d Nodes to Application: %s", nodesList.length, name);
+                }
+            } catch (ControllerBadStatusException controllerBadStatusException ) {
+                logger.error("Error initializing Application %s, message: %s", name, controllerBadStatusException.getMessage());
+            }
+            try {
+                json = controller.getRequest("controller/rest/applications/%d/business-transactions?output=JSON", id);
+                BusinessTransaction[] businessTransactionsList = gson.fromJson(json, BusinessTransaction[].class);
+                if (businessTransactionsList != null) {
+                    for (BusinessTransaction businessTransaction : businessTransactionsList)
+                        businessTransactions.add(businessTransaction);
+                    logger.info("Added %d Business Transactions to Application: %s", businessTransactionsList.length, name);
+                }
+            } catch (ControllerBadStatusException controllerBadStatusException ) {
+                logger.error("Error initializing Application %s, message: %s", name, controllerBadStatusException.getMessage());
+            }
+            try {
+                json = controller.getRequest("controller/rest/applications/%d/backends?output=JSON", id);
+                Backend[] backendsList = gson.fromJson(json, Backend[].class);
+                if (backendsList != null) {
+                    for (Backend backend : backendsList)
+                        backends.add(backend);
+                    logger.info("Added %d Backends to Application: %s", backendsList.length, name);
+                }
+            } catch (ControllerBadStatusException controllerBadStatusException ) {
+                logger.error("Error initializing Application %s, message: %s", name, controllerBadStatusException.getMessage());
+            }
+            try {
+                serviceEndpoints.addAll(controller.getServiceEndpoints(id));
+            } catch (ControllerBadStatusException controllerBadStatusException ) {
+                logger.error("Error initializing Application %s, message: %s", name, controllerBadStatusException.getMessage());
+            }
+            logger.info("Added %d Service Endpoints to Application: %s", serviceEndpoints.size(), name);
             synchronized (this.controllerMetricMap) {
                 if( isFinishedInitialization() ) return; //only let the first one run, all others return quickly once unblocked
                 if (getAllAvailableMetrics) {
@@ -283,6 +347,54 @@ public class Application implements Comparable<Application> {
                     && serviceEndpoint.applicationComponent.name.equals(serviceEndpoint.applicationComponent.name))
                 return serviceEndpoint;
         }
+        return null;
+    }
+
+    private static ConcurrentHashMap<String,List<MetricMatcher>> _getMetricMatcherAppCache = null;
+    private static ConcurrentHashMap<String,List<MetricMatcher>> _getMetricMatcherTierCache = null;
+    private static ConcurrentHashMap<String,List<MetricMatcher>> _getMetricMatcherNodeCache = null;
+    private static ConcurrentHashMap<String,List<MetricMatcher>> getMetricMatcherCache( String type ) {
+        switch (type) {
+            case "node": { return _getMetricMatcherNodeCache; }
+            case "tier": { return _getMetricMatcherTierCache; }
+            case "app":  { return _getMetricMatcherAppCache; }
+        }
+        return null;
+    }
+    private static void setMetricMatcherCache( String type, ConcurrentHashMap<String,List<MetricMatcher>> map ) {
+        switch (type) {
+            case "node": {  _getMetricMatcherNodeCache=map; break; }
+            case "tier": {  _getMetricMatcherTierCache=map; break; }
+            case "app":  {  _getMetricMatcherAppCache=map; break; }
+        }
+    }
+    public synchronized MetricMatcher getControllerMetricMatch(String blitzEntityTypeString, String metricNameOnController, DatabaseMetricDefinition databaseMetricDefinition) {
+        ConcurrentHashMap<String,List<MetricMatcher>> _getMetricMatcherCache = getMetricMatcherCache(blitzEntityTypeString);
+        if( _getMetricMatcherCache == null ) {
+            _getMetricMatcherCache = new ConcurrentHashMap<>();
+            logger.info("Initializing Metric Matcher for Application %s type %s",name, blitzEntityTypeString);
+            int counter=0;
+            for( String metricPath : readMetricPathsForType(blitzEntityTypeString)) {
+                logger.debug("Metric Path: %s",metricPath);
+                for( MetricData metricData : controller.getMetricValue(id, metricPath, true)) {
+                    logger.debug("Metric Data: %s",metricData);
+                    counter++;
+                    List<MetricMatcher> metricMatcherList = _getMetricMatcherCache.get(metricData.metricName);
+                    if( metricMatcherList == null ) metricMatcherList = new ArrayList<>();
+                    metricMatcherList.add( new MetricMatcher(metricData));
+                    _getMetricMatcherCache.put(metricData.metricName, metricMatcherList);
+                }
+            }
+            logger.info("Initialized Metric Matchers for Application %s type %s, %d matchers", name, blitzEntityTypeString, counter);
+            setMetricMatcherCache(blitzEntityTypeString, _getMetricMatcherCache);
+        }
+        List<MetricMatcher> metricMatchers = _getMetricMatcherCache.get(metricNameOnController);
+        if( metricMatchers != null ) {
+            for( MetricMatcher metricMatcher : metricMatchers ) {
+                if( metricMatcher.matches(databaseMetricDefinition) ) return metricMatcher;
+            }
+        }
+        logger.debug("Metric didn't match anything we have on the controller, this will be missing: %s", databaseMetricDefinition);
         return null;
     }
 }
