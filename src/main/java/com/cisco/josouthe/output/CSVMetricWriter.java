@@ -1,15 +1,14 @@
-package com.cisco.josouthe.csv;
+package com.cisco.josouthe.output;
 
 import com.cisco.josouthe.controller.TargetController;
-import com.cisco.josouthe.controller.dbdata.DatabaseMetricDefinition;
 import com.cisco.josouthe.controller.dbdata.DatabaseMetricValue;
 import com.cisco.josouthe.controller.dbdata.MetricValueCollection;
-import com.cisco.josouthe.controller.dbdata.SourceModel;
-import com.cisco.josouthe.exceptions.BadDataException;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import java.io.*;
+import java.util.ArrayList;
+import java.util.List;
 
 public class CSVMetricWriter {
     protected static final Logger logger = LogManager.getFormatterLogger();
@@ -22,6 +21,9 @@ public class CSVMetricWriter {
     private PrintWriter acnPrinter, anPrinter, aPrinter;
     private TargetController targetController;
     private boolean isOpen = false;
+    private boolean appWritten = false;
+    private boolean tierWritten = false;
+    private boolean nodeWritten = false;
 
     public CSVMetricWriter(String outputDir, TargetController targetController ) {
         this.outputDirName = outputDir;
@@ -31,6 +33,14 @@ public class CSVMetricWriter {
         applicationNodeFile = new File( outputDirectory, "blitz-application-node.csv");
         applicationFile = new File( outputDirectory, "blitz-application.csv");
         this.targetController = targetController;
+    }
+
+    public List<File> getMetricFiles() {
+        List<File> fileList = new ArrayList<>();
+        if( appWritten ) fileList.add(applicationFile);
+        if( tierWritten ) fileList.add(applicationComponentNodeFile);
+        if( nodeWritten ) fileList.add(applicationNodeFile);
+        return fileList;
     }
 
     public void open() throws IOException {
@@ -84,6 +94,7 @@ public class CSVMetricWriter {
                     }
                      */
                         case "app": {
+                            appWritten=true;
                             writeCSVValue(aPrinter, metricValue.ts_min*60000);
                             writeCSVValue(aPrinter, metricValue.metric_id);
                             writeCSVValue(aPrinter, metricValue.rollup_type);
@@ -101,6 +112,7 @@ public class CSVMetricWriter {
                             break;
                         }
                         case "tier": {
+                            tierWritten=true;
                             writeCSVValue(acnPrinter, metricValue.ts_min*60000);
                             writeCSVValue(acnPrinter, metricValue.metric_id);
                             writeCSVValue(acnPrinter, metricValue.rollup_type);
@@ -119,6 +131,7 @@ public class CSVMetricWriter {
                             break;
                         }
                         case "node": {
+                            nodeWritten=true;
                             writeCSVValue(anPrinter, metricValue.ts_min*60000);
                             writeCSVValue(anPrinter, metricValue.metric_id);
                             writeCSVValue(anPrinter, metricValue.rollup_type);

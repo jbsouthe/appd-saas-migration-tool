@@ -43,6 +43,7 @@ public class ControllerDatabase {
     public String toString() { return connectionString; }
 
     private boolean applyApplicationFilters() { return applicationsFilter != null; }
+    public String[] getApplicationsFilters() { return applicationsFilter; }
 
     private Connection getConnection() {
         int tries=0; boolean succeeded=false;

@@ -38,6 +38,10 @@ public class Application implements Comparable<Application> {
         this.name = name;
     }
 
+    public String toString() {
+        return String.format("%s Tiers: %d Nodes: %d Business Transactions: %d Backends: %d Service Endpoints: %d", name, tiers.size(), nodes.size(), businessTransactions.size(), backends.size(), serviceEndpoints.size());
+    }
+
     public void setController( Controller controller ) {
         this.controller=controller;
     }

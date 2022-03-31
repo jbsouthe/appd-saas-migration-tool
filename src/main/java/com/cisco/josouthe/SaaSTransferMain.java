@@ -1,16 +1,15 @@
 package com.cisco.josouthe;
 
-import com.cisco.josouthe.controller.Controller;
-import com.cisco.josouthe.controller.ControllerDatabase;
-import com.cisco.josouthe.controller.dbdata.MetricValueCollection;
-import com.cisco.josouthe.csv.CSVMetricWriter;
-import com.cisco.josouthe.exceptions.InvalidConfigurationException;
+import com.cisco.josouthe.output.DetailsFile;
+import com.cisco.josouthe.output.ZipFileMaker;
 import com.cisco.josouthe.scheduler.MainControlScheduler;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.xml.sax.SAXException;
 
+import java.io.File;
 import java.io.IOException;
+import java.util.List;
 
 public class SaaSTransferMain {
     private static final Logger logger = LogManager.getFormatterLogger();
@@ -33,10 +32,13 @@ public class SaaSTransferMain {
             return;
         }
 
+        long startTimestamp = System.currentTimeMillis();
         MainControlScheduler mainControlScheduler = new MainControlScheduler( config );
         mainControlScheduler.run();
-
-
-
+        long finishTimestamp = System.currentTimeMillis();
+        DetailsFile detailsFile = new DetailsFile(config, startTimestamp, finishTimestamp);
+        List<File> fileList = config.getCSVMetricWriter().getMetricFiles();
+        fileList.add(detailsFile.getFile());
+        new ZipFileMaker(config.getOutputDir(), config.getTargetController().url.getHost(), fileList);
     }
 }

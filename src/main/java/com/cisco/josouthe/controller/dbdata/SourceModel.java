@@ -70,6 +70,14 @@ public class SourceModel {
         return count;
     }
 
+    public Application[] getApplications() {
+        List<Application> applicationList = new ArrayList<>();
+        for( Account account : accounts.values() )
+            for( Application application : account.applications )
+                applicationList.add(application);
+        return applicationList.toArray(new Application[0]);
+    }
+
     public Application getApplication( long id ) {
         for( Account account : accounts.values() ) {
             Application application = account.getApplication(id);

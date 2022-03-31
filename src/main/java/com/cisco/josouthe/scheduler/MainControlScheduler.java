@@ -59,9 +59,9 @@ public class MainControlScheduler {
             try {
                 future.get();
             } catch (InterruptedException e) {
-                e.printStackTrace();
+                logger.warn("Interrupted exception in future task wait: %s",e);
             } catch (ExecutionException e) {
-                e.printStackTrace();
+                logger.warn("Execution Exception in task wait: %s", e);
             }
         }
         logger.info("All Data Fetch jobs scheduled have completed, now waiting for the Workers to finish processing");

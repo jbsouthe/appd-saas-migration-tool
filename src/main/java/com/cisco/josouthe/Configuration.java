@@ -2,7 +2,7 @@ package com.cisco.josouthe;
 
 import com.cisco.josouthe.controller.ControllerDatabase;
 import com.cisco.josouthe.controller.TargetController;
-import com.cisco.josouthe.csv.CSVMetricWriter;
+import com.cisco.josouthe.output.CSVMetricWriter;
 import com.cisco.josouthe.exceptions.InvalidConfigurationException;
 import org.apache.commons.digester3.Digester;
 import org.apache.logging.log4j.LogManager;
@@ -41,7 +41,7 @@ public class Configuration {
         return Integer.parseInt( getProperty(key, defaultInteger.toString()));
     }
 
-    public CSVMetricWriter getCSVMetricWriter() {
+    public synchronized CSVMetricWriter getCSVMetricWriter() {
         if( csvMetricWriter == null ) {
             this.csvMetricWriter = new CSVMetricWriter(outputDir, targetController);
         }
@@ -134,4 +134,6 @@ public class Configuration {
     }
 
     public void setRunning(boolean b) { this.running=b; }
+
+    public String getOutputDir() { return outputDir; }
 }
