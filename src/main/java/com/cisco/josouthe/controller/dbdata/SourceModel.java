@@ -14,6 +14,7 @@ import java.util.Map;
 public class SourceModel {
     private static final Logger logger = LogManager.getFormatterLogger();
     public Map<Long,Account> accounts;
+    private Map<String, String> applicationRenameMap;
 
     public SourceModel(ResultSet resultSet) throws SQLException {
         accounts = new HashMap<>();
@@ -95,6 +96,15 @@ public class SourceModel {
         return "UNKNOWN_APP";
     }
 
+    public String getNewApplicationName( long appId ) {
+        String appName = getApplicationName(appId);
+        if(applicationRenameMap.containsKey(appName)) {
+            logger.info("Changing name of Application in conversion from %s to %s on the SaaS Controller", appName, applicationRenameMap.get(appName));
+            return applicationRenameMap.get(appName);
+        }
+        return appName;
+    }
+
     public Application getApplication( String name ) {
         for( Account account : accounts.values() ) {
             Application application = account.getApplication(name);
@@ -155,5 +165,16 @@ public class SourceModel {
                 application.serviceEndpoints.add(new ServiceEndpoint(resultSet, application.getTier(tierId)));
             }
         }
+    }
+
+    public void setApplicationRenameMap(Map<String, String> applicationRenameMap) {
+        this.applicationRenameMap = applicationRenameMap;
+    }
+
+    public Object getNewApplicationName(String appName) {
+        if(applicationRenameMap.containsKey(appName)) {
+            return applicationRenameMap.get(appName);
+        }
+        return appName;
     }
 }

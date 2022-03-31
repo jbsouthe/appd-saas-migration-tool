@@ -7,7 +7,7 @@ this assumes the ./lib directory contains the jar files found in the package
 ## that config file looks like this:
 
     <Migration>
-        <MigrationLevel>1</MigrationLevel> <!--only use 1 for now;  1, 2, or 3 KISS 1=Application level, 2= 1+Tier+BT, 3= 2+Node+Backends+anything else we can find -->
+        <MigrationLevel>1</MigrationLevel> <!--only use 1 for now;  1, 2, or 3 KISS 1=Application level, 2= 1+Tier+Node+BT+SE, 3= 2+Custom Data+Backends+anything else we can find -->
         <DaysToRetrieve>90</DaysToRetrieve> <!-- 90 days is enough for a weekly baseline -->
         <NumberOfDatabaseThreads>15</NumberOfDatabaseThreads>
         <NumberOfConverterThreads>30</NumberOfConverterThreads>
@@ -26,13 +26,19 @@ this assumes the ./lib directory contains the jar files found in the package
                 <Application>
                     <Name>BTPlaybook_Lab</Name>
                 </Application>
+                <Application>
+                    <Name>BTPlaybook_Dev</Name>
+                    <NewName>BTPlaybook_Dev_New<NewName> <!-- this optional argument changes the name of the app -->
+                </Application>
             </Controller>
         </Source>
     </Migration>
 
+Be careful with this configuration. Remember that the target application and metrics must already exist or we will not be able to map them. In case of changing the application name on the target controller, do not try to do anything strange here. Just 1:1 on migration. If you think we can combine two applications into one, this would not be a valid assumption. We will instead generate duplicate blitz data files, and undefined resolution may occur.
+
 ## output is in a directory named ./test-data
 
-This generates files needed for import into the saas blitz datastore
+This generates files needed for import into the saas blitz datastore and packs it into a zip file which contains some helpful run information.
 
 ## Proxy Configuration
 

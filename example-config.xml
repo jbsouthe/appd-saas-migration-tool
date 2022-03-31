@@ -18,6 +18,12 @@
             <Application>
                 <Name>BTPlaybook_Lab</Name>
             </Application>
+            <!-- optionally, you can change the name of the application, but just like other requirements, it needs to exist on the target
+            <Application>
+                <Name>BTPlaybook_Lab</Name>
+                <NewName>BTPlaybook_Lab_New<NewName>
+            </Application>
+            -->
         </Controller>
     </Source>
 </Migration>

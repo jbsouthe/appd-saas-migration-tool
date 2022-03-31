@@ -57,7 +57,7 @@ public class DataConverterTask implements Runnable {
                                 metricDefinition.tierName = sourceModel.getApplicationTierName(metricValue.application_id, metricValue.application_component_instance_id);
                             }
                             case "app": {
-                                String applicationName = sourceModel.getApplicationName(metricValue.application_id);
+                                String applicationName = sourceModel.getNewApplicationName(metricValue.application_id);
                                 targetApplicationId = targetController.getEquivolentApplicationId(applicationName);
                                 if (targetApplicationId == null) {
                                     logger.warn("We can not process this data, the application doesn't exist on the target controller!");

@@ -12,7 +12,9 @@ import org.apache.logging.log4j.Logger;
 
 import java.sql.*;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 public class ControllerDatabase {
     private static final Logger logger = LogManager.getFormatterLogger();
@@ -29,13 +31,22 @@ public class ControllerDatabase {
     private static final String sqlWhereClauseLevelOne_ApplicationSummaryMetrics = " metric_id in (select id from metric where name like \"%BTM|Application Summary|%\" and name not like \"%|Component:%\") ";
     private static final String sqlSelectAllServiceEndpoints = "select se.id as se_id, se.name as se_name, se.entry_point_type as se_type, se.entity_type as se_entity_type, tier.id as tier_id, tier.name as tier_name, app.id as app_id, app.name as app_name from service_endpoint_definition se, application_component tier, application app where tier.id = se.entity_id and app.id = tier.application_id ";
     private String[] applicationsFilter;
+    private Map<String,String> applicationRenameMap;
 
-    public ControllerDatabase(String connectionString, String dbUser, String dbPassword, List<String> applicationsFilterList) {
+    public ControllerDatabase(String connectionString, String dbUser, String dbPassword, List<String> applicationsFilterList, Map<String,String> targetApplicationRenameMap ) {
         this.connectionString=connectionString;
         this.user=dbUser;
         this.pass=dbPassword;
         if( applicationsFilterList != null && applicationsFilterList.size() > 0)
             this.applicationsFilter=applicationsFilterList.toArray(new String[0]);
+        applicationRenameMap = new HashMap<>();
+        for( String appName : targetApplicationRenameMap.keySet() ) {
+            applicationRenameMap.put(appName, targetApplicationRenameMap.get(appName));
+            logger.info("As part of Migration we will attempt to rename data from on premise application '%s' to SaaS Application '%s' on the target controller, " +
+                    "please be careful with this. This is not to be used as a merge of two applications into a single SaaS application, or any other crazy idea. That will not end well."
+                    , appName, applicationRenameMap.get(appName)
+            );
+        }
         getModel();
         logger.info("Initialized Controller Database Connection. applications: %d", getModel().getApplicationCount() );
     }
@@ -81,6 +92,7 @@ public class ControllerDatabase {
             } catch (SQLException exception) {
                 logger.warn("Exception building controller model from database: %s", exception.toString());
             }
+            cached_model.setApplicationRenameMap( applicationRenameMap );
         }
         return cached_model;
     }

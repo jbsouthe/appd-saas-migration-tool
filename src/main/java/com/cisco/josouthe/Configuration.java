@@ -10,6 +10,8 @@ import org.apache.logging.log4j.Logger;
 
 import java.io.File;
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Properties;
 
 public class Configuration {
@@ -22,6 +24,7 @@ public class Configuration {
     private TargetController targetController;
     private ArrayList<ControllerDatabase> sourceControllers = new ArrayList<>();
     private ArrayList<String> applicationFilterList = new ArrayList<>();
+    private Map<String,String> targetApplicationNameMap = new HashMap<>();
     private ArrayList<String> metrics = new ArrayList<>();
     private boolean running=true;
 
@@ -73,8 +76,9 @@ public class Configuration {
         digester.addCallParam("Migration/TargetController/ClientSecret", paramCounter++);
 
         paramCounter=0;
-        digester.addCallMethod("Migration/Source/Controller/Application", "addSourceControllerApplication", 1);
+        digester.addCallMethod("Migration/Source/Controller/Application", "addSourceControllerApplication", 2);
         digester.addCallParam("Migration/Source/Controller/Application/Name", paramCounter++);
+        digester.addCallParam("Migration/Source/Controller/Application/NewName", paramCounter++);
 
 
         paramCounter=0;
@@ -119,13 +123,15 @@ public class Configuration {
         this.targetController = new TargetController( url, clientId, clientSecret, false, this);
     }
 
-    public void addSourceControllerApplication( String name ) throws InvalidConfigurationException {
+    public void addSourceControllerApplication( String name, String newName ) throws InvalidConfigurationException {
         this.applicationFilterList.add( name );
+        if( newName != null && !"".equals(newName) ) targetApplicationNameMap.put(name,newName);
     }
 
     public void addSourceController( String getAllDataForAllApplicationsFlag, String connectionString, String dbUser, String dbPassword ) throws InvalidConfigurationException {
-        ControllerDatabase controllerDatabase = new ControllerDatabase( connectionString, dbUser, dbPassword, applicationFilterList);
+        ControllerDatabase controllerDatabase = new ControllerDatabase( connectionString, dbUser, dbPassword, applicationFilterList, targetApplicationNameMap );
         this.applicationFilterList.clear();
+        this.targetApplicationNameMap.clear();
         this.sourceControllers.add(controllerDatabase);
     }
 

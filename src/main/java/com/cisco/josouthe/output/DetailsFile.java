@@ -35,7 +35,7 @@ public class DetailsFile {
             printer.println(String.format("Applications with data being migrated:"));
             for(ControllerDatabase controllerDatabase : configuration.getControllerList()) {
                 for( String application : controllerDatabase.getApplicationsFilters() )
-                    printer.println(String.format("\t%s",application));
+                    printer.println(String.format("\t%s as %s on SaaS",application, controllerDatabase.getModel().getNewApplicationName(application)));
             }
             printer.println("Data Files to Import into BLITZ:");
             for( File dataFile : configuration.getCSVMetricWriter().getMetricFiles() )
