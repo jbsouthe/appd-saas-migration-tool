@@ -18,10 +18,10 @@ import java.util.regex.Pattern;
 
 public class Parser {
     private static final Logger logger = LogManager.getFormatterLogger();
-    private static Pattern patternNodeNameInMetricPath = Pattern.compile("|Individual\\sNodes|(?<nodeName>[^|]+)|.*");
-    private static Pattern patternBTIdInMetricName = Pattern.compile("|BT:(?<btId>\\d+)|");
-    private static Pattern patternComponentIdInMetricName = Pattern.compile("|Component:(?<componentId>\\d+)|");
-    private static Pattern patternSEIdInMetricName = Pattern.compile("|SE:(?<seId>\\d+)|");
+    private static Pattern patternNodeNameInMetricPath = Pattern.compile(".*\\|Individual\\sNodes\\|(?<nodeName>[^\\|]+)\\|.*");
+    private static Pattern patternBTIdInMetricName = Pattern.compile(".*\\|BT:(?<btId>\\d+)\\|.*");
+    private static Pattern patternComponentIdInMetricName = Pattern.compile(".*\\|Component:(?<componentId>\\d+)\\|.*");
+    private static Pattern patternSEIdInMetricName = Pattern.compile(".*\\|SE:(?<seId>\\d+)\\|.*");
 
 
     private static SimpleDateFormat simpleDateFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSXXX");

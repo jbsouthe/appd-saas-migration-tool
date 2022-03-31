@@ -15,10 +15,12 @@ public class ZipFileMakerTest extends TestCase {
 
     @Test
     public void testZipGeneration() throws Exception {
+        new File("southerland-test-SaasMigrationExport.zip").delete();
         List<File> fileList = new ArrayList<>();
         fileList.add( new File("README.md"));
         fileList.add( new File("NOTICE.txt"));
         fileList.add( new File("LICENSE"));
         new ZipFileMaker(".", "southerland-test", fileList);
+        assert new File("southerland-test-SaasMigrationExport.zip").exists();
     }
 }
