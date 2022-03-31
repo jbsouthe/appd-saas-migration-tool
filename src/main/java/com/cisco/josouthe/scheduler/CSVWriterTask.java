@@ -35,7 +35,7 @@ public class CSVWriterTask implements Runnable{
         boolean processedOne=false;
         while( !processedOne ) {
             try {
-                MetricValueCollection metricValueCollection = dataQueue.poll(5, TimeUnit.MINUTES);
+                MetricValueCollection metricValueCollection = dataQueue.poll(1, TimeUnit.MINUTES);
                 if( metricValueCollection != null ) {
                     processedOne=true;
                     logger.info("Poll returned %d data elements to write", metricValueCollection.getMetrics().size());

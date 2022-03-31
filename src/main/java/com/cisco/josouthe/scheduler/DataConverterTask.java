@@ -35,7 +35,7 @@ public class DataConverterTask implements Runnable {
         boolean processedOne=false;
         while( !processedOne ) {
             try {
-                MetricValueCollection metricValueCollection = inputQueue.poll(5, TimeUnit.MINUTES);
+                MetricValueCollection metricValueCollection = inputQueue.poll(1, TimeUnit.MINUTES);
                 if (metricValueCollection != null) {
                     long startTime = System.currentTimeMillis();
                     processedOne=true;
