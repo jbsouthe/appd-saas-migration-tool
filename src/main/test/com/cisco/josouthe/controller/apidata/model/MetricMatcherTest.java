@@ -7,12 +7,15 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.apache.logging.log4j.core.config.Configurator;
 import org.junit.Before;
-import org.junit.jupiter.api.Test;
+import junit.framework.TestCase;
+import org.junit.Test;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-class MetricMatcherTest {
+public class MetricMatcherTest extends TestCase {
     private static final Logger logger = LogManager.getFormatterLogger();
+
+    public MetricMatcherTest() {}
 
     @Before
     public void setUp() {
@@ -20,7 +23,7 @@ class MetricMatcherTest {
     }
 
     @Test
-    void matchesBTMetricTest() {
+    public void testMatchesBTMetric() throws Exception {
         MetricData btControllerMetricData = new MetricData();
         btControllerMetricData.metricName="BTM|BTs|BT:4487611|Component:3019102|Average Response Time (ms)";
         btControllerMetricData.metricPath="Business Transaction Performance|Business Transactions|ProxyTier|Some Crazy Transaction|Average Response Time (ms)";
