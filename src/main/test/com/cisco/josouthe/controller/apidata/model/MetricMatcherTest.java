@@ -37,7 +37,7 @@ public class MetricMatcherTest extends TestCase {
         DatabaseMetricDefinition wrongBTDatabaseMetricDefinition = new DatabaseMetricDefinition();
         wrongBTDatabaseMetricDefinition.tierId=3019102;
         wrongBTDatabaseMetricDefinition.btId=1000;
-        wrongBTDatabaseMetricDefinition.metricName=btControllerMetricData.metricName;
+        wrongBTDatabaseMetricDefinition.metricName="BTM|BTs|BT:1000|Component:3019102|Average Response Time (ms)";
 
         MetricMatcher metricMatcher = new MetricMatcher(btControllerMetricData);
         assert metricMatcher.matches(null) == false;

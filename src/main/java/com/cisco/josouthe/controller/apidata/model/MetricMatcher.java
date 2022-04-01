@@ -32,6 +32,7 @@ public class MetricMatcher {
             logger.debug("input metric name '%s' != '%s'",databaseMetricDefinition.metricName, metricName);
             return false;
         }
+        /*
         logger.debug("metric matches so far: %s(%d) path: %s", metricName,id,metricPath);
         if( tierId != null && !tierId.equals(databaseMetricDefinition.tierId)) {
             logger.debug("Tier id found in matcher %d, but not a match in target %d",tierId, databaseMetricDefinition.tierId);
@@ -46,6 +47,7 @@ public class MetricMatcher {
             return false;
         }
         logger.debug("'%s' this must be equal to '%s'(%d) path: '%s'",databaseMetricDefinition, metricName,id,metricPath);
+         */
         return true;
     }
 }
