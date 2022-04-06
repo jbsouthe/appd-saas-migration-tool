@@ -7,7 +7,7 @@ this assumes the ./lib directory contains the jar files found in the package
 ## that config file looks like this:
 
     <Migration>
-        <MigrationLevel>1</MigrationLevel> <!--only use 1 for now;  1, 2, or 3 KISS 1=Application level, 2= 1+Tier+Node+BT+SE, 3= 2+Custom Data+Backends+anything else we can find -->
+        <MigrationLevel>1</MigrationLevel> <!--only use 1 and 2 for now, 3 has not been completed;  1, 2, or 3 KISS 1=Application level, 2= 1+Tier+Node+BT+SE, 3= 2+Custom Data+Backends+anything else we can find -->
         <DaysToRetrieve>90</DaysToRetrieve> <!-- 90 days is enough for a weekly baseline -->
         <NumberOfDatabaseThreads>15</NumberOfDatabaseThreads>
         <NumberOfConverterThreads>30</NumberOfConverterThreads>
