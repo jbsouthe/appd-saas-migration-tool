@@ -18,6 +18,8 @@ import java.util.concurrent.TimeUnit;
 
 public class DataConverterTask implements Runnable {
     private static final Logger logger = LogManager.getFormatterLogger();
+    private static final Logger metricLogger = LogManager.getFormatterLogger("METRIC_LOGGER");
+
 
     private Configuration configuration;
     private TargetController targetController;
@@ -69,7 +71,7 @@ public class DataConverterTask implements Runnable {
                         try {
                             targetMetricId = targetController.getEquivolentMetricId(metricValue.getBlitzEntityTypeString(), targetApplicationId, metricDefinition);
                         } catch (BadDataException e) {
-                            logger.warn("Skipping this metric, we received a no data found metric: %s for metric: %s", e.toString(), metricDefinition);
+                            metricLogger.warn("Skipping this metric, we received a no data found metric: %s for metric: %s", e.toString(), metricDefinition);
                             continue;
                         }
                         switch (metricValue.getBlitzEntityTypeString()) {
