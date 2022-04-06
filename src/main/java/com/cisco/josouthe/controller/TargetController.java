@@ -46,7 +46,7 @@ public class TargetController extends Controller{
         Application application = getApplication(targetApplicationId);
         String metricNameOnController = convertMetricNameFromDatabaseToController( blitzEntityTypeString, application, databaseMetricDefinition );
         logger.debug("Metric search: appid: %d db metric name '%s' controller metric path '%s'", targetApplicationId, databaseMetricDefinition.metricName, metricNameOnController);
-        if( application != null ) {
+        if( application != null && metricNameOnController != null ) {
             if( application.isControllerNull() ) application.setController(this);
             MetricMatcher metricMatcher = application.getControllerMetricMatch(blitzEntityTypeString, metricNameOnController, databaseMetricDefinition);
             if( metricMatcher != null ) {
@@ -61,33 +61,51 @@ public class TargetController extends Controller{
 
 
     public String convertMetricNameFromDatabaseToController(String blitzEntityTypeString, Application application, DatabaseMetricDefinition databaseMetricDefinition) {
+        logger.debug("convertMetricNameFromDatabaseToController type: %s application: %s metric: %s",blitzEntityTypeString, application.name, databaseMetricDefinition.metricName);
         String databaseMetricName = databaseMetricDefinition.metricName;
         Long optionalBTId = Parser.parseBTFromMetricName(databaseMetricName);
         Long optionalComponentId = Parser.parseComponentFromMetricName(databaseMetricName);
         Long optionalServiceEndpointId = Parser.parseSEFromMetricName(databaseMetricName);
-        try {
-            if (optionalBTId != null) {
-                //Get BT name with this btId
-                String name = getModel().getApplication(application.name).getBusinessTransaction(optionalBTId).name;
+        logger.debug("parsed from metric: %s BT: %d Component: %d SE: %d", databaseMetricName, optionalBTId, optionalComponentId, optionalServiceEndpointId);
+        if (optionalBTId != null) {
+            try {
                 //Get target BTId from BT name
-                BusinessTransaction businessTransaction = application.getBusinessTransaction(name);
-                databaseMetricName = databaseMetricName.replaceAll("|BT:\\d+|", String.format("|BT:%d|", businessTransaction.id));
+                BusinessTransaction businessTransaction = application.getBusinessTransaction(databaseMetricDefinition.btName);
+                if( businessTransaction != null ) {
+                    databaseMetricName = databaseMetricName.replaceAll("\\|BT:\\d+\\|", String.format("|BT:%d|", businessTransaction.id));
+                } else {
+                    return null;
+                }
+            }catch (NullPointerException nullPointerException ) {
+                logger.warn("Null Pointer Exception in attempts to map BT metric parts to target controller: %s", nullPointerException.toString(), nullPointerException);
             }
-            if (optionalComponentId != null) {
-                //Get Tier name with this component id
-                String name = getModel().getApplication(application.name).getTier(optionalComponentId).name;
-                //get Target Tier Id with this tier name
-                Tier tier = application.getTier(name);
-                databaseMetricName = databaseMetricName.replaceAll("|Component:\\d+|", String.format("|Component:%d|", tier.id));
-            }
-            if (optionalServiceEndpointId != null) {
-                ServiceEndpoint serviceEndpoint = getModel().getApplication(application.name).getServiceEndpoint(optionalServiceEndpointId);
-                ServiceEndpoint targetServiceEndpoint = application.getServiceEndpoint(serviceEndpoint);
-                databaseMetricName = databaseMetricName.replaceAll("|SE:\\d+|", String.format("|SE:%d|", targetServiceEndpoint.id));
-            }
-        }catch (NullPointerException nullPointerException ) {
-            logger.warn("Null Pointer Exception in attempts to map optional metric parts to target controller: %s, cause: %s",nullPointerException.toString(),nullPointerException.getCause().toString());
         }
+        if (optionalComponentId != null) {
+            try {
+                //get Target Tier Id with this tier name
+                Tier tier = application.getTier(databaseMetricDefinition.tierName);
+                if( tier != null ) {
+                    databaseMetricName = databaseMetricName.replaceAll("\\|Component:\\d+\\|", String.format("|Component:%d|", tier.id));
+                } else {
+                    return null;
+                }
+            }catch (NullPointerException nullPointerException ) {
+                logger.warn("Null Pointer Exception in attempts to map Component metric parts to target controller: %s", nullPointerException.toString(), nullPointerException);
+            }
+        }
+        if (optionalServiceEndpointId != null ) {
+            try {
+                ServiceEndpoint targetServiceEndpoint = application.getServiceEndpoint(databaseMetricDefinition.seName, databaseMetricDefinition.tierName);
+                if( targetServiceEndpoint != null ) {
+                    databaseMetricName = databaseMetricName.replaceAll("\\|SE:\\d+\\|", String.format("|SE:%d|", targetServiceEndpoint.id));
+                } else {
+                    return null;
+                }
+            }catch (NullPointerException nullPointerException ) {
+                logger.warn("Null Pointer Exception in attempts to map SE metric parts to target controller: %s", nullPointerException.toString(), nullPointerException);
+            }
+        }
+        logger.debug("convertMetricNameFromDatabaseToController type: %s application: %s from: %s to: %s",blitzEntityTypeString, application.name, databaseMetricDefinition.metricName, databaseMetricName);
         return databaseMetricName; //give up, good luck
     }
 
