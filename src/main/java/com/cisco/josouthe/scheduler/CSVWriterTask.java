@@ -48,6 +48,6 @@ public class CSVWriterTask implements Runnable{
                 //ignore it
             }
         }
-        logger.info("Shutting down CSV Writer Task");
+        //logger.info("Shutting down CSV Writer Task");
     }
 }
