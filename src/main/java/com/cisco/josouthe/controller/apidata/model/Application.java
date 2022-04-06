@@ -289,6 +289,22 @@ public class Application implements Comparable<Application> {
 
     public void addMetricDefinition(DatabaseMetricDefinition metricDefinition) {
         if( metricsMap == null ) metricsMap = new HashMap<>();
+        if( metricDefinition.btId != null ) {
+            BusinessTransaction businessTransaction = getBusinessTransaction(metricDefinition.btId);
+            if( businessTransaction != null )
+                metricDefinition.btName = businessTransaction.name;
+        }
+        if( metricDefinition.tierId != null ) {
+            Tier tier = getTier( metricDefinition.tierId );
+            if( tier != null )
+                metricDefinition.tierName = tier.name;
+        }
+        if( metricDefinition.seId != null ) {
+            ServiceEndpoint serviceEndpoint = getServiceEndpoint(metricDefinition.seId);
+            if( serviceEndpoint != null ) {
+                metricDefinition.seName = serviceEndpoint.name;
+            }
+        }
         metricsMap.put(metricDefinition.metricId, metricDefinition);
     }
 
@@ -346,9 +362,13 @@ public class Application implements Comparable<Application> {
     }
 
     public ServiceEndpoint getServiceEndpoint(ServiceEndpoint sourceServiceEndpoint) {
+        return getServiceEndpoint(sourceServiceEndpoint.name, sourceServiceEndpoint.applicationComponent.name);
+    }
+
+    public ServiceEndpoint getServiceEndpoint(String serviceEndpointName, String componentName) {
         for( ServiceEndpoint serviceEndpoint : serviceEndpoints ) {
-            if( serviceEndpoint.name.equals(sourceServiceEndpoint.name)
-                    && serviceEndpoint.applicationComponent.name.equals(serviceEndpoint.applicationComponent.name))
+            if( serviceEndpoint.name.equals(serviceEndpointName)
+                    && serviceEndpoint.applicationComponent.name.equals(componentName))
                 return serviceEndpoint;
         }
         return null;
@@ -373,6 +393,7 @@ public class Application implements Comparable<Application> {
         }
     }
     public synchronized MetricMatcher getControllerMetricMatch(String blitzEntityTypeString, String metricNameOnController, DatabaseMetricDefinition databaseMetricDefinition) {
+        if( metricNameOnController == null ) return null;
         ConcurrentHashMap<String,List<MetricMatcher>> _getMetricMatcherCache = getMetricMatcherCache(blitzEntityTypeString);
         if( _getMetricMatcherCache == null ) {
             _getMetricMatcherCache = new ConcurrentHashMap<>();
