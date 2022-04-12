@@ -70,6 +70,8 @@ public class DataConverterTask implements Runnable {
                         Long targetMetricId = null;
                         try {
                             targetMetricId = targetController.getEquivolentMetricId(metricValue.getBlitzEntityTypeString(), targetApplicationId, metricDefinition);
+                            metricValue.metric_id = targetMetricId;
+                            if( targetMetricId == null ) continue;
                         } catch (BadDataException e) {
                             metricLogger.warn("Skipping this metric, we received a no data found metric: %s for metric: %s", e.toString(), metricDefinition);
                             continue;
@@ -94,7 +96,6 @@ public class DataConverterTask implements Runnable {
                                 metricValue.application_component_instance_id = targetTierId;
                             }
                             case "app": {
-                                metricValue.metric_id = targetMetricId;
                                 metricValue.account_id = targetAccountId;
                                 metricValue.application_id = targetApplicationId;
                             }

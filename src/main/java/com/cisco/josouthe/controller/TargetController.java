@@ -51,10 +51,10 @@ public class TargetController extends Controller{
             MetricMatcher metricMatcher = application.getControllerMetricMatch(blitzEntityTypeString, metricNameOnController, databaseMetricDefinition);
             if( metricMatcher != null ) {
                 logger.debug("Metric Id on target controller: %s(%d)", metricMatcher.metricName, metricMatcher.id);
+                return metricMatcher.id;
             } else {
-                throw new BadDataException(String.format("Metric Data is null for metric path: %s", metricMatcher));
+                throw new BadDataException(String.format("Metric Data is null for metric matcher: %s", metricMatcher));
             }
-            if( metricMatcher != null ) return metricMatcher.id;
         }
         return null;
     }

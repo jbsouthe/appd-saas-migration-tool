@@ -129,7 +129,7 @@ public class Application implements Comparable<Application> {
     public BusinessTransaction getBusinessTransaction( String name ) {
         init();
         for( BusinessTransaction businessTransaction : businessTransactions )
-            if( businessTransaction.name.equals(name) ) return businessTransaction;
+            if( businessTransaction != null && businessTransaction.name != null && businessTransaction.name.equals(name) ) return businessTransaction;
         return null;
     }
 
@@ -416,7 +416,10 @@ public class Application implements Comparable<Application> {
         List<MetricMatcher> metricMatchers = _getMetricMatcherCache.get(metricNameOnController);
         if( metricMatchers != null ) {
             for( MetricMatcher metricMatcher : metricMatchers ) {
-                if( metricMatcher.matches(databaseMetricDefinition) ) return metricMatcher;
+                if( metricMatcher.matches(databaseMetricDefinition) ) {
+                    logger.debug("Metric Matcher found for metric: '%s' metric id on target: %d", metricNameOnController, metricMatcher.id);
+                    return metricMatcher;
+                }
             }
         }
         logger.debug("Metric didn't match anything we have on the controller, this will be missing: %s", databaseMetricDefinition);
