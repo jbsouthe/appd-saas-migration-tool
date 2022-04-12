@@ -32,13 +32,7 @@ public class SaaSTransferMain {
             return;
         }
 
-        long startTimestamp = System.currentTimeMillis();
         MainControlScheduler mainControlScheduler = new MainControlScheduler( config );
         mainControlScheduler.run();
-        long finishTimestamp = System.currentTimeMillis();
-        DetailsFile detailsFile = new DetailsFile(config, startTimestamp, finishTimestamp);
-        List<File> fileList = config.getCSVMetricWriter().getMetricFiles();
-        fileList.add(detailsFile.getFile());
-        new ZipFileMaker(config.getOutputDir(), config.getTargetController().url.getHost(), fileList);
     }
 }

@@ -18,7 +18,7 @@ public class ZipFileMakerTest extends TestCase {
         fileList.add( new File("README.md"));
         fileList.add( new File("NOTICE.txt"));
         fileList.add( new File("LICENSE"));
-        new ZipFileMaker(".", "southerland-test", fileList);
+        new ZipFileMaker(".", "southerland-test", fileList, null);
         assert new File("southerland-test-SaasMigrationExport.zip").exists();
     }
 }
