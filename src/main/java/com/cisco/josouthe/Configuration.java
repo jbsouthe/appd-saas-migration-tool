@@ -129,7 +129,9 @@ public class Configuration {
     }
 
     public void addSourceController( String getAllDataForAllApplicationsFlag, String connectionString, String dbUser, String dbPassword ) throws InvalidConfigurationException {
-        ControllerDatabase controllerDatabase = new ControllerDatabase( connectionString, dbUser, dbPassword, applicationFilterList, targetApplicationNameMap );
+        ControllerDatabase controllerDatabase = new ControllerDatabase( connectionString, dbUser, dbPassword,
+                applicationFilterList, targetApplicationNameMap,
+                this.properties.getProperty("scheduler-NumberOfDatabaseThreads","10") );
         this.applicationFilterList.clear();
         this.targetApplicationNameMap.clear();
         this.sourceControllers.add(controllerDatabase);

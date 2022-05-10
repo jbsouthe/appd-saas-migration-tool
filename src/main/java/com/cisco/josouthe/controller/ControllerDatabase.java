@@ -7,6 +7,8 @@ import com.cisco.josouthe.controller.dbdata.SourceModel;
 import com.cisco.josouthe.exceptions.BadDataException;
 import com.cisco.josouthe.exceptions.InvalidConfigurationException;
 import com.cisco.josouthe.util.TimeUtil;
+import com.zaxxer.hikari.HikariConfig;
+import com.zaxxer.hikari.HikariDataSource;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -32,8 +34,10 @@ public class ControllerDatabase {
     private static final String sqlSelectAllServiceEndpoints = "select se.id as se_id, se.name as se_name, se.entry_point_type as se_type, se.entity_type as se_entity_type, tier.id as tier_id, tier.name as tier_name, app.id as app_id, app.name as app_name from service_endpoint_definition se, application_component tier, application app where tier.id = se.entity_id and app.id = tier.application_id ";
     private String[] applicationsFilter;
     private Map<String,String> applicationRenameMap;
+    private HikariConfig hikariConfig;
+    private HikariDataSource dataSource;
 
-    public ControllerDatabase(String connectionString, String dbUser, String dbPassword, List<String> applicationsFilterList, Map<String,String> targetApplicationRenameMap ) {
+    public ControllerDatabase(String connectionString, String dbUser, String dbPassword, List<String> applicationsFilterList, Map<String, String> targetApplicationRenameMap, String numberOfDatabaseThreads) {
         this.connectionString=connectionString;
         this.user=dbUser;
         this.pass=dbPassword;
@@ -47,6 +51,17 @@ public class ControllerDatabase {
                     , appName, applicationRenameMap.get(appName)
             );
         }
+        this.hikariConfig = new HikariConfig();
+        this.hikariConfig.setJdbcUrl(connectionString);
+        this.hikariConfig.setUsername(user);
+        this.hikariConfig.setPassword(pass);
+        this.hikariConfig.addDataSourceProperty("cachePrepStmts", "true");
+        this.hikariConfig.addDataSourceProperty("prepStmtCacheSize", "250");
+        this.hikariConfig.addDataSourceProperty("prepStmtCacheSqlLimit", "2048");
+        this.hikariConfig.addDataSourceProperty("maximumPoolSize", numberOfDatabaseThreads);
+        this.hikariConfig.addDataSourceProperty("connectionTimeout", "60000");
+        this.hikariConfig.addDataSourceProperty("leakDetectionThreshold", "35000");
+        this.dataSource = new HikariDataSource(this.hikariConfig);
         getModel();
         logger.info("Initialized Controller Database Connection. applications: %d", getModel().getApplicationCount() );
     }
@@ -62,7 +77,7 @@ public class ControllerDatabase {
         while( !succeeded && tries < MAX_RETRY_LIMIT) {
             try {
                 tries++;
-                connection = DriverManager.getConnection(this.connectionString, this.user, this.pass);
+                connection = this.dataSource.getConnection();
                 succeeded = true;
             } catch (SQLException e) {
                 logger.warn("Error trying to connect to database, attempt %d of %d, message: %s", tries, MAX_RETRY_LIMIT, e.toString());
