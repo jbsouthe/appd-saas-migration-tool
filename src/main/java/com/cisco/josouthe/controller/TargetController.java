@@ -15,7 +15,7 @@ public class TargetController extends Controller{
 
     public TargetController(String urlString, String clientId, String clientSecret, boolean getAllDataForAllApplicationsFlag, Configuration configuration) throws InvalidConfigurationException {
         super(urlString, clientId, clientSecret, getAllDataForAllApplicationsFlag, null, configuration);
-        logger.info("");
+        logger.info("Finished creating target controller %s", urlString);
     }
 
 

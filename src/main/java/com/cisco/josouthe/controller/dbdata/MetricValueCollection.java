@@ -20,7 +20,17 @@ public class MetricValueCollection {
 
     public List<DatabaseMetricValue> getMetrics() { return metricValueList; }
     public DatabaseMetricDefinition getMetricDefinition( DatabaseMetricValue databaseMetricValue ) {
-        return sourceModel.getApplication(databaseMetricValue.application_id).getMetricDefinition(databaseMetricValue.metric_id);
+        if( databaseMetricValue == null ) {
+            logger.error("database metric value is null");
+        }
+        if( databaseMetricValue.application_id == null ) {
+            logger.error("database metric value application id is null");
+        }
+        Application application = sourceModel.getApplication(databaseMetricValue.application_id);
+        if( application == null ) {
+            logger.error("Application not found in local database %s", databaseMetricValue.application_id);
+        }
+        return application.getMetricDefinition(databaseMetricValue.metric_id);
     }
     public SourceModel getSourceModel() { return sourceModel; }
 }

@@ -13,7 +13,6 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.util.*;
-import java.util.concurrent.ConcurrentHashMap;
 
 public class Application implements Comparable<Application> {
     private static final Logger logger = LogManager.getFormatterLogger();
@@ -25,10 +24,10 @@ public class Application implements Comparable<Application> {
     public List<BusinessTransaction> businessTransactions = new ArrayList<>();
     public List<Backend> backends = new ArrayList<>();
     public List<ServiceEndpoint> serviceEndpoints = new ArrayList<>();
-    private Controller controller;
-    private Map<String,MetricData> controllerMetricMap = new HashMap<>();
-    private Map<String,Integer> controllerMetricLookupCountMap = new HashMap<>();
-    private Map<Long, DatabaseMetricDefinition> metricsMap;
+    private transient Controller controller;
+    private transient Map<String,MetricData> controllerMetricMap = new HashMap<>();
+    private transient Map<String,Integer> controllerMetricLookupCountMap = new HashMap<>();
+    private transient Map<Long, DatabaseMetricDefinition> metricsMap;
     public boolean getAllAvailableMetrics=false;
     private boolean finishedInitialization=false;
 
@@ -324,14 +323,14 @@ public class Application implements Comparable<Application> {
         return metricDataList;
     }
 
-    private static ConcurrentHashMap<String,List<String>> _readMetricPathsForTypeCache = null;
-    private static synchronized List<String> readMetricPathsForType(String type) {
-        if( _readMetricPathsForTypeCache == null ) _readMetricPathsForTypeCache = new ConcurrentHashMap<>();
+    private transient HashMap<String,List<String>> _readMetricPathsForTypeCache = null;
+    private synchronized List<String> readMetricPathsForType(String type) {
+        if( _readMetricPathsForTypeCache == null ) _readMetricPathsForTypeCache = new HashMap<>();
         List<String> metricPaths = _readMetricPathsForTypeCache.get(type);
         if( metricPaths != null ) return metricPaths;
 
         metricPaths = new ArrayList<>();
-        BufferedReader reader = new BufferedReader( new InputStreamReader( type.getClass().getResourceAsStream("/MetricPaths.csv")));
+        BufferedReader reader = new BufferedReader( new InputStreamReader( this.getClass().getResourceAsStream("/MetricPaths.csv")));
         String line = null;
         try {
             line = reader.readLine();
@@ -374,10 +373,10 @@ public class Application implements Comparable<Application> {
         return null;
     }
 
-    private static ConcurrentHashMap<String,List<MetricMatcher>> _getMetricMatcherAppCache = null;
-    private static ConcurrentHashMap<String,List<MetricMatcher>> _getMetricMatcherTierCache = null;
-    private static ConcurrentHashMap<String,List<MetricMatcher>> _getMetricMatcherNodeCache = null;
-    private static ConcurrentHashMap<String,List<MetricMatcher>> getMetricMatcherCache( String type ) {
+    private transient HashMap<String,List<MetricMatcher>> _getMetricMatcherAppCache = null;
+    private transient HashMap<String,List<MetricMatcher>> _getMetricMatcherTierCache = null;
+    private transient HashMap<String,List<MetricMatcher>> _getMetricMatcherNodeCache = null;
+    private HashMap<String,List<MetricMatcher>> getMetricMatcherCache( String type ) {
         switch (type) {
             case "node": { return _getMetricMatcherNodeCache; }
             case "tier": { return _getMetricMatcherTierCache; }
@@ -385,7 +384,7 @@ public class Application implements Comparable<Application> {
         }
         return null;
     }
-    private static void setMetricMatcherCache( String type, ConcurrentHashMap<String,List<MetricMatcher>> map ) {
+    private void setMetricMatcherCache( String type, HashMap<String,List<MetricMatcher>> map ) {
         switch (type) {
             case "node": {  _getMetricMatcherNodeCache=map; break; }
             case "tier": {  _getMetricMatcherTierCache=map; break; }
@@ -394,9 +393,9 @@ public class Application implements Comparable<Application> {
     }
     public synchronized MetricMatcher getControllerMetricMatch(String blitzEntityTypeString, String metricNameOnController, DatabaseMetricDefinition databaseMetricDefinition) {
         if( metricNameOnController == null ) return null;
-        ConcurrentHashMap<String,List<MetricMatcher>> _getMetricMatcherCache = getMetricMatcherCache(blitzEntityTypeString);
+        HashMap<String,List<MetricMatcher>> _getMetricMatcherCache = getMetricMatcherCache(blitzEntityTypeString);
         if( _getMetricMatcherCache == null ) {
-            _getMetricMatcherCache = new ConcurrentHashMap<>();
+            _getMetricMatcherCache = new HashMap<>();
             logger.info("Initializing Metric Matcher for Application %s type %s",name, blitzEntityTypeString);
             int counter=0;
             for( String metricPath : readMetricPathsForType(blitzEntityTypeString)) {

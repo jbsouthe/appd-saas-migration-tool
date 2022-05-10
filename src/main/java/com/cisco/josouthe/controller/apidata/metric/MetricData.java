@@ -15,8 +15,8 @@ public class MetricData {
     public long metricId;
     public String metricName, metricPath, frequency, hostname;
     public List<MetricValue> metricValues;
-    public Controller controller;
-    public Application application;
+    public transient Controller controller;
+    public transient Application application;
 
     public class MetricValue {
         public long startTimeInMillis, occurrences, current, min, max, count, sum, value;
