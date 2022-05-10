@@ -22,10 +22,10 @@
     <Logger name="METRIC_LOGGER" level="info" additivity="false">
       <AppenderRef ref="METRIC_LOGGER_File"/>
     </Logger>
-    <Logger name="com.cisco.josouthe.controller.model.Application" level="trace" additivity="false">
+    <Logger name="com.cisco.josouthe.controller.model.Application" level="info" additivity="false">
       <AppenderRef ref="Async"/>
     </Logger>
-    <Root level="debug">
+    <Root level="info">
       <AppenderRef ref="Async"/>
     </Root>
   </Loggers>
