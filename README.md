@@ -1,6 +1,8 @@
 # How to run this
 
-java -jar SaaSMigrationTool-1.0-20220223.jar test-db.xml
+Please run with Java 11+ JVM
+
+    java --illegal-access=warn -jar SaaSMigrationTool-1.0-20220223.jar test-db.xml
 
 this assumes the ./lib directory contains the jar files found in the package
 
