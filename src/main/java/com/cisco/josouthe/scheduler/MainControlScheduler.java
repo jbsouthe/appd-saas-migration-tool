@@ -1,6 +1,7 @@
 package com.cisco.josouthe.scheduler;
 
 import com.cisco.josouthe.Configuration;
+import com.cisco.josouthe.MetaData;
 import com.cisco.josouthe.controller.ControllerDatabase;
 import com.cisco.josouthe.controller.dbdata.MetricValueCollection;
 import com.cisco.josouthe.output.DetailsFile;
@@ -102,7 +103,9 @@ public class MainControlScheduler {
                 } catch (InterruptedException e) {
                     logger.warn("Interrupted exception in future task wait: %s", e.toString(), e);
                 } catch (ExecutionException e) {
-                    logger.warn("Execution Exception in task wait: %s", e.toString(), e);
+                    logger.fatal("Execution Exception in task wait: %s", e.toString(), e);
+                    System.err.println("Fatal Error in run, one of the worker tasks had a really weird error, so we are going to stop. Please send the log file and any error on standard output to: " + MetaData.CONTACT_GECOS);
+                    System.exit(1);
                 } catch (TimeoutException e) {
                     //no op
                 }
