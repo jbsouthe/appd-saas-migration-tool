@@ -25,6 +25,7 @@ this assumes the ./lib directory contains the jar files found in the package
                 <DBConnectionString>jdbc:mysql://localhost:3388/controller</DBConnectionString> <!-- point to the controller db -->
                 <DBUser>root</DBUser>
                 <DBPassword>appd</DBPassword>
+                <NumberOfConnections>16</NumberOfConnections> <!-- NumberOfDatabaseThreads+1 is the default, if this is missing, beware of mysql max -->
                 <Application>
                     <Name>BTPlaybook_Lab</Name>
                 </Application>

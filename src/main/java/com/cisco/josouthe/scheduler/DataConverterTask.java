@@ -81,7 +81,8 @@ public class DataConverterTask implements Runnable {
                                 String targetNodeName = sourceModel.getApplicationTierNodeName(metricValue.application_id, metricValue.node_id);
                                 Long targetNodeId = targetController.getEquivolentNodeId(targetApplicationId, targetNodeName );
                                 if (targetNodeId == null) {
-                                    logger.warn("Target Node Conversion Failed: %s(%d) not found on target controller", targetNodeName, metricValue.node_id);
+                                    if( ! "UNKNOWN_NODE".equals(targetNodeName))
+                                        logger.warn("Target Node Conversion Failed: %s(%d) not found on target controller", targetNodeName, metricValue.node_id);
                                     continue;
                                 }
                                 metricValue.node_id = targetNodeId;
@@ -90,7 +91,8 @@ public class DataConverterTask implements Runnable {
                                 String targetTierName = sourceModel.getApplicationTierName(metricValue.application_id, metricValue.application_component_instance_id);
                                 Long targetTierId = targetController.getEquivolentTierId(targetApplicationId, targetTierName);
                                 if (targetTierId == null) {
-                                    logger.warn("Target Tier Conversion Failed: %s(%d) not found on target controller", targetTierName, metricValue.application_component_instance_id);
+                                    if( !"UNKNOWN_TIER".equals(targetTierName) )
+                                        logger.warn("Target Tier Conversion Failed: %s(%d) not found on target controller", targetTierName, metricValue.application_component_instance_id);
                                     continue;
                                 }
                                 metricValue.application_component_instance_id = targetTierId;

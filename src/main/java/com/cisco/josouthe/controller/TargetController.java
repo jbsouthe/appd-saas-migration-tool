@@ -110,6 +110,7 @@ public class TargetController extends Controller{
     }
 
     public Long getEquivolentTierId(Long targetApplicationId, String applicationTierName) {
+        if( "UNKNOWN_TIER".equals(applicationTierName) ) return null;
         Application application = getApplication(targetApplicationId);
         if( application != null ) {
             Tier tier = application.getTier(applicationTierName);
@@ -120,6 +121,7 @@ public class TargetController extends Controller{
     }
 
     public Long getEquivolentNodeId(Long targetApplicationId, String applicationTierNodeName) {
+        if( "UNKNOWN_NODE".equals(applicationTierNodeName) ) return null;
         Application application = getApplication(targetApplicationId);
         if( application != null ) {
             Node node = application.getNode(applicationTierNodeName);

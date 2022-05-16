@@ -99,7 +99,7 @@ public class SourceModel {
     public String getNewApplicationName( long appId ) {
         String appName = getApplicationName(appId);
         if(applicationRenameMap.containsKey(appName)) {
-            logger.info("Changing name of Application in conversion from %s to %s on the SaaS Controller", appName, applicationRenameMap.get(appName));
+            logger.debug("Changing name of Application in conversion from %s to %s on the SaaS Controller", appName, applicationRenameMap.get(appName));
             return applicationRenameMap.get(appName);
         }
         return appName;

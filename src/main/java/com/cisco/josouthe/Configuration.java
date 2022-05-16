@@ -82,12 +82,12 @@ public class Configuration {
 
 
         paramCounter=0;
-        digester.addCallMethod("Migration/Source/Controller", "addSourceController", 4);
+        digester.addCallMethod("Migration/Source/Controller", "addSourceController", 5);
         digester.addCallParam("Migration/Source/Controller", paramCounter++, "getAllDataForAllApplications");
         digester.addCallParam("Migration/Source/Controller/DBConnectionString", paramCounter++);
         digester.addCallParam("Migration/Source/Controller/DBUser", paramCounter++);
         digester.addCallParam("Migration/Source/Controller/DBPassword", paramCounter++);
-
+        digester.addCallParam("Migration/Source/Controller/NumberOfConnections", paramCounter++);
 
         digester.parse( new File(configFileName) );
         logger.info("Validating Configured Settings");
@@ -128,10 +128,13 @@ public class Configuration {
         if( newName != null && !"".equals(newName) ) targetApplicationNameMap.put(name,newName);
     }
 
-    public void addSourceController( String getAllDataForAllApplicationsFlag, String connectionString, String dbUser, String dbPassword ) throws InvalidConfigurationException {
+    public void addSourceController( String getAllDataForAllApplicationsFlag, String connectionString, String dbUser, String dbPassword, String numberOfDatabaseConnections ) throws InvalidConfigurationException {
+        if( numberOfDatabaseConnections == null ) {
+            int num = getProperty("scheduler-NumberOfDatabaseThreads", 15) + 1;
+            numberOfDatabaseConnections= String.valueOf(num);
+        }
         ControllerDatabase controllerDatabase = new ControllerDatabase( connectionString, dbUser, dbPassword,
-                applicationFilterList, targetApplicationNameMap,
-                this.properties.getProperty("scheduler-NumberOfDatabaseThreads","10") );
+                applicationFilterList, targetApplicationNameMap, numberOfDatabaseConnections );
         this.applicationFilterList.clear();
         this.targetApplicationNameMap.clear();
         this.sourceControllers.add(controllerDatabase);

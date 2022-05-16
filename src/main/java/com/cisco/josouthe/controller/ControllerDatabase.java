@@ -9,6 +9,7 @@ import com.cisco.josouthe.exceptions.InvalidConfigurationException;
 import com.cisco.josouthe.util.TimeUtil;
 import com.zaxxer.hikari.HikariConfig;
 import com.zaxxer.hikari.HikariDataSource;
+import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -20,7 +21,7 @@ import java.util.Map;
 
 public class ControllerDatabase {
     private static final Logger logger = LogManager.getFormatterLogger();
-    private static final int MAX_RETRY_LIMIT = 3;
+    private static final int MAX_RETRY_LIMIT = 5;
     private static final String TABLE_APP_TEN_MIN = "metricdata_ten_min_agg_app";
     private static final String TABLE_APP_ONE_HOUR = "metricdata_hour_agg_app";
     private String connectionString, user, pass;
@@ -37,7 +38,7 @@ public class ControllerDatabase {
     private HikariConfig hikariConfig;
     private HikariDataSource dataSource;
 
-    public ControllerDatabase(String connectionString, String dbUser, String dbPassword, List<String> applicationsFilterList, Map<String, String> targetApplicationRenameMap, String numberOfDatabaseThreads) {
+    public ControllerDatabase(String connectionString, String dbUser, String dbPassword, List<String> applicationsFilterList, Map<String, String> targetApplicationRenameMap, String numberOfDatabaseConnections) {
         this.connectionString=connectionString;
         this.user=dbUser;
         this.pass=dbPassword;
@@ -58,12 +59,14 @@ public class ControllerDatabase {
         this.hikariConfig.addDataSourceProperty("cachePrepStmts", "true");
         this.hikariConfig.addDataSourceProperty("prepStmtCacheSize", "250");
         this.hikariConfig.addDataSourceProperty("prepStmtCacheSqlLimit", "2048");
-        this.hikariConfig.addDataSourceProperty("maximumPoolSize", numberOfDatabaseThreads);
+        this.hikariConfig.addDataSourceProperty("useServerPrepStmts", "true");
+        this.hikariConfig.addDataSourceProperty("maximumPoolSize", numberOfDatabaseConnections);
         this.hikariConfig.addDataSourceProperty("connectionTimeout", "60000");
         this.hikariConfig.addDataSourceProperty("leakDetectionThreshold", "35000");
+        this.hikariConfig.addDataSourceProperty("maintainTimeStats", "false");
         this.dataSource = new HikariDataSource(this.hikariConfig);
         getModel();
-        logger.info("Initialized Controller Database Connection. applications: %d", getModel().getApplicationCount() );
+        logger.info("Initialized Controller Database Connection. applications: %d maximumPoolSize: %s maxRetryLimit: %d", getModel().getApplicationCount(), numberOfDatabaseConnections, MAX_RETRY_LIMIT );
     }
 
     public String toString() { return connectionString; }
@@ -80,7 +83,18 @@ public class ControllerDatabase {
                 connection = this.dataSource.getConnection();
                 succeeded = true;
             } catch (SQLException e) {
-                logger.warn("Error trying to connect to database, attempt %d of %d, message: %s", tries, MAX_RETRY_LIMIT, e.toString());
+                Level level = Level.WARN;
+                if( tries == MAX_RETRY_LIMIT ) level = Level.ERROR;
+                logger.log(level, "Error trying to connect to database, attempt %d of %d, message: %s", tries, MAX_RETRY_LIMIT, e.toString());
+            }
+        }
+        if( connection == null ) {
+            //just try to get a fallback connection, non connection pooled
+            try {
+                connection = DriverManager.getConnection(connectionString, user, pass);
+                logger.warn("Finally got a connection, using the system driver, whew");
+            } catch (SQLException e) {
+                logger.error("Can't connect to this database, even with the system driver, FUBAR: %s", e.toString(), e);
             }
         }
         return connection;
@@ -88,6 +102,8 @@ public class ControllerDatabase {
 
     public SourceModel getModel() {
         if( cached_model == null ) {
+            logger.debug("Source Model is not yet cached, building it now");
+            logger.trace("get connection and prepare statement for sqlSelectAllIds");
             try (Connection connection = getConnection();
                  PreparedStatement statement = connection.prepareStatement(sqlSelectAllIds); ) {
                 logger.debug("Running Query: %s",sqlSelectAllIds);
@@ -95,15 +111,18 @@ public class ControllerDatabase {
                     cached_model = new SourceModel(resultSet);
                     getMetricDefinitions(cached_model);
                 }
+                logger.trace("finished sqlSelectAllIds");
             } catch (SQLException exception) {
                 logger.warn("Exception building controller model from database: %s", exception.toString());
             }
+            logger.trace("get connection and prepare statement for sqlSelectAllServiceEndpoints");
             try (Connection connection = getConnection();
                  PreparedStatement statement = connection.prepareStatement(sqlSelectAllServiceEndpoints); ) {
                 logger.debug("Running Query: %s",sqlSelectAllServiceEndpoints);
                 try (ResultSet resultSet = statement.executeQuery()) {
                     cached_model.addServiceEndpoints(resultSet);
                 }
+                logger.trace("finished sqlSelectAllServiceEndpoints");
             } catch (SQLException exception) {
                 logger.warn("Exception building controller model from database: %s", exception.toString());
             }
@@ -113,12 +132,14 @@ public class ControllerDatabase {
     }
 
     private void getMetricDefinitions( SourceModel sourceModel ) {
+        logger.trace("get connection and prepare statement for sqlSelectMetricDefinitions");
         try (Connection connection = getConnection();
              PreparedStatement statement = connection.prepareStatement(sqlSelectMetricDefinitions); ) {
             logger.debug("Running Query: %s", sqlSelectMetricDefinitions);
             try (ResultSet resultSet = statement.executeQuery()) {
                 sourceModel.addMetricDefinitions(resultSet);
             }
+            logger.trace("finished sqlSelectMetricDefinitions");
         } catch (SQLException exception) {
             logger.warn("Exception building controller model from database: %s", exception.toString());
         }
@@ -163,6 +184,7 @@ public class ControllerDatabase {
             sb.append(" ) ");
             sqlQuery = sb.toString();
         }
+        logger.trace("get connection and prepare statement for sqlSelectMetricData<Something>");
         try (Connection connection = getConnection();
              PreparedStatement statement = connection.prepareStatement(sqlQuery); ) {
             try (ResultSet resultSet = statement.executeQuery()) {
@@ -173,12 +195,14 @@ public class ControllerDatabase {
                         logger.warn("Error building data metric from row, message: %s", resultSet.getWarnings().getMessage());
                     }
                 }
+                logger.trace("finished sqlSelectMetricData<Something>");
                 return new MetricValueCollection( getModel(), metrics);
             }
         } catch (SQLException exception) {
             logger.warn("SQL: '%s'",sqlQuery);
             logger.warn("Exception collecting hourly metrics from database: %s", exception.toString());
         }
+        logger.debug("about to return null on getAllMetrics");
         return null;
     }
 }

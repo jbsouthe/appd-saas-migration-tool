@@ -7,6 +7,7 @@ import com.cisco.josouthe.exceptions.InvalidConfigurationException;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
+import java.util.LinkedList;
 import java.util.concurrent.LinkedBlockingQueue;
 
 public class MetricDatabaseReaderTask implements Runnable {
@@ -50,12 +51,22 @@ public class MetricDatabaseReaderTask implements Runnable {
             long startTime = System.currentTimeMillis();
             if( startTimestamp == null ) {
                 metricValueCollection = controllerDatabase.getAllMetrics(dataType, configuration.getMigrationLevel(), configuration.getDaysToRetrieveData());
+                if( metricValueCollection == null ) {
+                    logger.warn("No metrics returned for level %d type %s days %d", configuration.getMigrationLevel(), dataType, configuration.getDaysToRetrieveData());
+                }
             } else {
                 metricValueCollection = controllerDatabase.getAllMetrics(dataType, configuration.getMigrationLevel(), startTimestamp, endTimestamp);
+                if( metricValueCollection == null ) {
+                    logger.warn("No metrics returned for level %d type %s start %s end %s", configuration.getMigrationLevel(), dataType, startTimestamp, endTimestamp);
+                }
             }
             long runTime = System.currentTimeMillis() - startTime;
-            logger.info("Fetched %d %s metrics from %s database for processing in %d milliseconds", metricValueCollection.getMetrics().size(), dataType, controllerDatabase.toString(), runTime);
-            dataToInsertLinkedBlockingQueue.add( metricValueCollection );
+            if( metricValueCollection != null ) {
+                logger.info("Fetched %d %s metrics from %s database for processing in %d milliseconds", metricValueCollection.getMetrics().size(), dataType, controllerDatabase.toString(), runTime);
+            } else {
+                metricValueCollection = new MetricValueCollection(controllerDatabase.getModel(), new LinkedList<>());
+            }
+            dataToInsertLinkedBlockingQueue.add(metricValueCollection);
         } catch (InvalidConfigurationException e) {
             logger.warn("Could not get metrics for controller %s, because: %s", controllerDatabase.toString(), e.toString());
         }
