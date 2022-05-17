@@ -42,9 +42,6 @@ public class MainControlScheduler {
 
     public void run() {
         this.configuration.setRunning(true);
-        ProgressBar progressBar = new ProgressBar("AppD Saas Export", 100);
-        progressBar.start();
-        progressBar.setExtraMessage("Initializing Workers....");
         long startTS= TimeUtil.now();
         long endTS = startTS - incrementMS;
         long maxInitTasks = 0;
@@ -55,25 +52,43 @@ public class MainControlScheduler {
             case 3:
             case 2: {
                 maxZipTasks += 2;
-                while( startTS > TimeUtil.getDaysBackTimestamp(configuration.getDaysToRetrieveData()) ) {
+                long saveStartTS = startTS;
+                while (startTS > TimeUtil.getDaysBackTimestamp(configuration.getDaysToRetrieveData())) {
                     //maxInitTasks++;
-                    maxRunTasks+=6;
+                    maxRunTasks += 6;
+                    startTS = endTS;
+                    endTS -= incrementMS;
+                }
+                startTS = saveStartTS;
+            }
+            case 1: {
+                maxZipTasks++;
+                maxInitTasks++;
+                while (startTS > TimeUtil.getDaysBackTimestamp(configuration.getDaysToRetrieveData())) {
+                    maxRunTasks += 3;
                     startTS = endTS;
                     endTS -= incrementMS;
                 }
             }
-            case 1: maxZipTasks++; maxInitTasks++; maxRunTasks+=3;
         }
         maxInitTasks = configuration.getControllerList().length;
         logger.info("Setting max init tasks to %d",maxInitTasks);
-        progressBar.maxHint(maxInitTasks+maxRunTasks+4+maxZipTasks);
+        long maxProgressBarTasks = maxInitTasks
+                +(configuration.getControllerList().length * maxRunTasks)
+                +29
+                +maxZipTasks;
+        ProgressBar progressBar = new ProgressBar("AppD Saas Export", maxProgressBarTasks);
+        progressBar.start();
+        progressBar.setExtraMessage("Initializing Workers....");
+        //progressBar.maxHint( );
+        long startTimestamp= TimeUtil.now();
         for( ControllerDatabase controllerDatabase : configuration.getControllerList() ) {
             progressBar.step();
             switch (configuration.getMigrationLevel()) { //1 = App, 2 = 1+Tiers+nodes, 3= 2+BT+ALL
                 case 3: { //TODO implement the deeper methods
                 }
                 case 2: {
-                    long startTimestamp= TimeUtil.now();
+                    long saveStartTS = startTimestamp;
                     long endTimestamp = startTimestamp - incrementMS;
                     while( startTimestamp > TimeUtil.getDaysBackTimestamp(configuration.getDaysToRetrieveData()) ) {
                         futures.addAll( submitJob(new MetricDatabaseReaderTask("node", controllerDatabase, startTimestamp, endTimestamp, configuration, dataToConvertLinkedBlockingQueue)));
@@ -81,9 +96,15 @@ public class MainControlScheduler {
                         startTimestamp = endTimestamp;
                         endTimestamp -= incrementMS;
                     }
+                    startTimestamp = saveStartTS;
                 }
                 case 1: {
-                    futures.addAll( submitJob(new MetricDatabaseReaderTask( "app", controllerDatabase, configuration, dataToConvertLinkedBlockingQueue)));
+                    long endTimestamp = startTimestamp - incrementMS;
+                    while( startTimestamp > TimeUtil.getDaysBackTimestamp(configuration.getDaysToRetrieveData()) ) {
+                        futures.addAll( submitJob(new MetricDatabaseReaderTask( "app", controllerDatabase, startTimestamp, endTimestamp, configuration, dataToConvertLinkedBlockingQueue)));
+                        startTimestamp = endTimestamp;
+                        endTimestamp -= incrementMS;
+                    }
                 }
 
             }
@@ -102,7 +123,7 @@ public class MainControlScheduler {
                     counter++;
                 } catch (InterruptedException e) {
                     logger.warn("Interrupted exception in future task wait: %s", e.toString(), e);
-                } catch (ExecutionException e) {
+                } catch (ExecutionException | RuntimeException e) {
                     logger.fatal("Execution Exception in task wait: %s", e.toString(), e);
                     System.err.println("Fatal Error in run, one of the worker tasks had a really weird error, so we are going to stop. Please send the log file and any error on standard output to: " + MetaData.CONTACT_GECOS);
                     System.exit(1);
@@ -117,7 +138,7 @@ public class MainControlScheduler {
         executorFetchData.shutdown();
         try {
             while (!executorFetchData.awaitTermination(300, TimeUnit.MILLISECONDS)) {
-                progressBar.setExtraMessage("Waiting for Database Reader Tasks to shutdown");
+                progressBar.setExtraMessage("Waiting for Database Reader Tasks to finish");
                 logger.info("Still waiting for Database Reader Tasks to finish");
             }
         } catch (InterruptedException ignored) {}
@@ -125,7 +146,7 @@ public class MainControlScheduler {
         executorConvertData.shutdown();
         try {
             while (!executorConvertData.awaitTermination(300, TimeUnit.MILLISECONDS)) {
-                progressBar.setExtraMessage("Waiting for Data Conversion Tasks to shutdown");
+                progressBar.setExtraMessage("Waiting for Data Conversion Tasks to finish");
                 logger.info("Still waiting for Data Conversion Tasks to finish");
             }
         } catch (InterruptedException ignored) {}
@@ -133,7 +154,7 @@ public class MainControlScheduler {
         executorInsertData.shutdown();
         try {
             while (!executorInsertData.awaitTermination(300, TimeUnit.MILLISECONDS)) {
-                progressBar.setExtraMessage("Waiting for CSV Writer Tasks to shutdown");
+                progressBar.setExtraMessage("Waiting for CSV Writer Tasks to finish");
                 logger.info("Still waiting for CSV Writer Tasks to finish");
             }
         } catch (InterruptedException ignored) {}
@@ -151,6 +172,7 @@ public class MainControlScheduler {
         fileList.add(detailsFile.getFile());
         new ZipFileMaker(configuration.getOutputDir(), configuration.getTargetController().url.getHost(), fileList, progressBar);
         progressBar.setExtraMessage("Done!");
+        progressBar.stepTo(maxProgressBarTasks);
         progressBar.stop();
     }
 
