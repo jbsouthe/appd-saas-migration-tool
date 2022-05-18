@@ -114,6 +114,6 @@ public class DataConverterTask implements Runnable {
             }
 
         }
-        logger.info("Shutting down data conversion worker Task");
+        logger.debug("Shutting down data conversion worker Task");
     }
 }

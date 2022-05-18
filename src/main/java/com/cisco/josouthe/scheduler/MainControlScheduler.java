@@ -64,11 +64,13 @@ public class MainControlScheduler {
             case 1: {
                 maxZipTasks++;
                 maxInitTasks++;
+                long saveStartTS = startTS;
                 while (startTS > TimeUtil.getDaysBackTimestamp(configuration.getDaysToRetrieveData())) {
                     maxRunTasks += 3;
                     startTS = endTS;
                     endTS -= incrementMS;
                 }
+                startTS=saveStartTS;
             }
         }
         maxInitTasks = configuration.getControllerList().length;
@@ -81,7 +83,7 @@ public class MainControlScheduler {
         progressBar.start();
         progressBar.setExtraMessage("Initializing Workers....");
         //progressBar.maxHint( );
-        long startTimestamp= TimeUtil.now();
+        long startTimestamp= startTS;
         for( ControllerDatabase controllerDatabase : configuration.getControllerList() ) {
             progressBar.step();
             switch (configuration.getMigrationLevel()) { //1 = App, 2 = 1+Tiers+nodes, 3= 2+BT+ALL
@@ -112,6 +114,7 @@ public class MainControlScheduler {
         logger.info("Scheduled a total of %d jobs to run fetching data for export to CSV", futures.size());
         progressBar.setExtraMessage("Exporting Data.....");
         int maxFutures = futures.size();
+        progressBar.maxHint(maxFutures+maxZipTasks+3);
         int counter=0;
         bigLoop: while(!futures.isEmpty()) {
             logger.info("Size of futures %d counter %d",futures.size(), counter);
@@ -119,8 +122,10 @@ public class MainControlScheduler {
                 if( counter >= maxFutures ) break bigLoop;
                 try {
                     future.get(100, TimeUnit.MILLISECONDS);
-                    progressBar.step();
-                    counter++;
+                    if( future.isDone() ) {
+                        progressBar.step();
+                        counter++;
+                    }
                 } catch (InterruptedException e) {
                     logger.warn("Interrupted exception in future task wait: %s", e.toString(), e);
                 } catch (ExecutionException | RuntimeException e) {
@@ -128,7 +133,7 @@ public class MainControlScheduler {
                     System.err.println("Fatal Error in run, one of the worker tasks had a really weird error, so we are going to stop. Please send the log file and any error on standard output to: " + MetaData.CONTACT_GECOS);
                     System.exit(1);
                 } catch (TimeoutException e) {
-                    //no op
+                    logger.trace("Timed out on future.get() call");
                 }
             }
         }
@@ -172,7 +177,7 @@ public class MainControlScheduler {
         fileList.add(detailsFile.getFile());
         new ZipFileMaker(configuration.getOutputDir(), configuration.getTargetController().url.getHost(), fileList, progressBar);
         progressBar.setExtraMessage("Done!");
-        progressBar.stepTo(maxProgressBarTasks);
+        //progressBar.stepTo(maxProgressBarTasks);
         progressBar.stop();
     }
 
