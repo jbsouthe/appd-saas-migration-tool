@@ -9,10 +9,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import java.io.File;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Properties;
+import java.util.*;
 
 public class Configuration {
     private static final Logger logger = LogManager.getFormatterLogger();
@@ -26,6 +23,7 @@ public class Configuration {
     private ArrayList<String> applicationFilterList = new ArrayList<>();
     private Map<String,String> targetApplicationNameMap = new HashMap<>();
     private ArrayList<String> metrics = new ArrayList<>();
+    private Set<String> applicationsToBuildModelsFrom = new HashSet<>();
     private boolean running=true;
 
     public String getProperty( String key ) {
@@ -43,6 +41,8 @@ public class Configuration {
     public Integer getProperty( String key, Integer defaultInteger ) {
         return Integer.parseInt( getProperty(key, defaultInteger.toString()));
     }
+
+    public Set<String> getApplicationsToBuildModelsFrom() { return applicationsToBuildModelsFrom; }
 
     public synchronized CSVMetricWriter getCSVMetricWriter() {
         if( csvMetricWriter == null ) {
@@ -125,12 +125,17 @@ public class Configuration {
 
     public void addSourceControllerApplication( String name, String newName ) throws InvalidConfigurationException {
         this.applicationFilterList.add( name );
-        if( newName != null && !"".equals(newName) ) targetApplicationNameMap.put(name,newName);
+        if( newName != null && !"".equals(newName) ) {
+            targetApplicationNameMap.put(name, newName);
+            applicationsToBuildModelsFrom.add(newName);
+        } else {
+            applicationsToBuildModelsFrom.add(name);
+        }
     }
 
     public void addSourceController( String getAllDataForAllApplicationsFlag, String connectionString, String dbUser, String dbPassword, String numberOfDatabaseConnections ) throws InvalidConfigurationException {
         if( numberOfDatabaseConnections == null ) {
-            int num = getProperty("scheduler-NumberOfDatabaseThreads", 15) + 1;
+            int num = (getProperty("scheduler-NumberOfDatabaseThreads", 15) *3) + 1;
             numberOfDatabaseConnections= String.valueOf(num);
         }
         ControllerDatabase controllerDatabase = new ControllerDatabase( connectionString, dbUser, dbPassword,
