@@ -1,8 +1,15 @@
 package com.cisco.josouthe.controller.apidata.model;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
+import java.util.LinkedList;
 import java.util.List;
+import java.util.Set;
 
 public class Model {
+    protected static final Logger logger = LogManager.getFormatterLogger();
+
     private ApplicationListing applicationListing;
     public Model( ApplicationListing applicationListing ) {
         this.applicationListing = applicationListing;
@@ -19,5 +26,20 @@ public class Model {
     public void addApplication(Application application) {
         applicationListing.apmApplications.add(application);
         applicationListing._allApplications.add(application);
+    }
+
+    public void removeAllAppsBut(Set<String> applicationsToBuildModelsFrom) {
+        logger.trace("Pruning applications to retain only %d applications: %s", applicationsToBuildModelsFrom.size(), applicationsToBuildModelsFrom);
+        List<String> toRemoveList = new LinkedList<>();
+        for( Application application : applicationListing.getApplications() ) {
+            if( !applicationsToBuildModelsFrom.contains(application.getName()) ) {
+                toRemoveList.add(application.name);
+                logger.trace("Flagging for removal, application name: '%s'",application.getName() );
+            } else {
+                logger.trace("Keeping application name: '%s'",application.getName() );
+            }
+        }
+        applicationListing.removeAll( toRemoveList );
+        logger.trace("Removing %d applications, to leave %d applications in the model", toRemoveList.size(), applicationListing._allApplications.size());
     }
 }

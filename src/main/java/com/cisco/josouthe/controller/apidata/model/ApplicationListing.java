@@ -1,11 +1,14 @@
 package com.cisco.josouthe.controller.apidata.model;
 
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
+import java.util.concurrent.ConcurrentSkipListSet;
 
 public class ApplicationListing {
     public Application analyticsApplication, cloudMonitoringApplication, dbMonApplication, simApplication;
-    public List<Application> apiMonitoringApplications, apmApplications, eumWebApplications, iotApplications, mobileAppContainers, _allApplications;
+    public List<Application> apiMonitoringApplications, apmApplications, eumWebApplications, iotApplications, mobileAppContainers;
+    public List<Application> _allApplications;
 
     public List<Application> getApplications() {
         if( _allApplications == null ) {
@@ -21,5 +24,14 @@ public class ApplicationListing {
             if( iotApplications != null ) _allApplications.addAll(iotApplications);
         }
         return _allApplications;
+    }
+
+    public void removeAll( List<String> names ) {
+        if( _allApplications == null ) getApplications();
+        for(Iterator<Application> it = _allApplications.iterator(); it.hasNext(); ) {
+            Application curApplication = it.next();
+            if( names.contains(curApplication.getName()) )
+                it.remove();
+        }
     }
 }

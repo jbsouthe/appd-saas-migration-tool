@@ -84,7 +84,7 @@ public class Controller {
         this.applications = applications;
         this.client = HttpClientFactory.getHttpClient();
         this.configuration = configuration;
-        getModel(); //initialize model
+        //getModel(); //initialize model
     }
 
     public Configuration getConfiguration() { return configuration; }
@@ -354,6 +354,7 @@ public class Controller {
                 String json = getRequest("controller/restui/applicationManagerUiBean/getApplicationsAllTypes");
                 logger.trace("getApplicationsAllTypes returned: %s",json);
                 this.controllerModel = new Model(gson.fromJson(json, ApplicationListing.class));
+                this.controllerModel.removeAllAppsBut( configuration.getApplicationsToBuildModelsFrom() );
                 for (Application application : this.controllerModel.getAPMApplications()) {
                     logger.info("Creating Model for Application: %s",application.name);
                     application.setController(this);
