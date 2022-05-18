@@ -104,9 +104,20 @@ public class ControllerDatabase {
         if( cached_model == null ) {
             logger.debug("Source Model is not yet cached, building it now");
             logger.trace("get connection and prepare statement for sqlSelectAllIds");
+            String sqlQuery = sqlSelectAllIds;
+            if( applyApplicationFilters() ) {
+                StringBuilder sb = new StringBuilder(sqlQuery);
+                sb.append(" and app.name in ( ");
+                for( int i=0; i< this.applicationsFilter.length; i++ ) {
+                    sb.append( String.format("'%s'",this.applicationsFilter[i]) );
+                    if( i+1 < this.applicationsFilter.length ) sb.append(", ");
+                }
+                sb.append(" ) ");
+                sqlQuery = sb.toString();
+            }
             try (Connection connection = getConnection();
-                 PreparedStatement statement = connection.prepareStatement(sqlSelectAllIds); ) {
-                logger.debug("Running Query: %s",sqlSelectAllIds);
+                 PreparedStatement statement = connection.prepareStatement(sqlQuery); ) {
+                logger.debug("Running Query: %s",sqlQuery);
                 try (ResultSet resultSet = statement.executeQuery()) {
                     cached_model = new SourceModel(resultSet);
                     getMetricDefinitions(cached_model);
@@ -116,9 +127,20 @@ public class ControllerDatabase {
                 logger.warn("Exception building controller model from database: %s", exception.toString());
             }
             logger.trace("get connection and prepare statement for sqlSelectAllServiceEndpoints");
+            sqlQuery = sqlSelectAllServiceEndpoints;
+            if( applyApplicationFilters() ) {
+                StringBuilder sb = new StringBuilder(sqlQuery);
+                sb.append(" and app.name in ( ");
+                for( int i=0; i< this.applicationsFilter.length; i++ ) {
+                    sb.append( String.format("'%s'",this.applicationsFilter[i]) );
+                    if( i+1 < this.applicationsFilter.length ) sb.append(", ");
+                }
+                sb.append(" ) ");
+                sqlQuery = sb.toString();
+            }
             try (Connection connection = getConnection();
-                 PreparedStatement statement = connection.prepareStatement(sqlSelectAllServiceEndpoints); ) {
-                logger.debug("Running Query: %s",sqlSelectAllServiceEndpoints);
+                 PreparedStatement statement = connection.prepareStatement(sqlQuery); ) {
+                logger.debug("Running Query: %s",sqlQuery);
                 try (ResultSet resultSet = statement.executeQuery()) {
                     cached_model.addServiceEndpoints(resultSet);
                 }
